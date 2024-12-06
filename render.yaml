@@ -10,4 +10,4 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_RUN_PORT
-        value: 10000 
+        value: 10000
