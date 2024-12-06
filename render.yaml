@@ -3,11 +3,11 @@ services:
     name: resolutionpal
     env: python
     buildCommand: npm install && npm run build:css && pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 4 --bind 0.0.0.0:10000 --timeout 120
+    startCommand: gunicorn app:app --workers 4 --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.0
+        value: 3.11.0
       - key: FLASK_ENV
         value: production
-      - key: FLASK_RUN_PORT
+      - key: PORT
         value: 10000
