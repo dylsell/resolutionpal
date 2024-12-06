@@ -1,0 +1,32 @@
+{
+  "name": "twentyfiveresolutions",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"python app.py\" \"npm run watch:css\"",
+    "build": "npm run build:css",
+    "build:css": "tailwindcss -i ./static/styles.css -o ./static/dist/styles.css",
+    "watch:css": "tailwindcss -i ./static/styles.css -o ./static/dist/styles.css --watch"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.8.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "framer-motion": "^10.12.16",
+    "openai": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.0.2",
+    "vite": "^4.3.9"
+  }
+}

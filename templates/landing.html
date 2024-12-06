@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Landing page content -->
+<div class="min-h-screen">
+    <!-- Hero Section -->
+    <div class="landing-hero landing-section text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto flex items-center justify-center gap-8 md:gap-12">
+                <!-- Logo -->
+                <div class="hidden md:block w-1/4">
+                    <img src="{{ url_for('static', filename='Resolutionpal.png') }}" alt="ResolutionPal Logo" class="h-48 object-contain">
+                </div>
+                <!-- Hero Content -->
+                <div class="text-center md:text-left md:w-3/4">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">ResolutionPal</h1>
+                    <p class="text-xl md:text-2xl mb-8 landing-text-light">Create personalized, achievable New Year's resolutions with the help of AI.</p>
+                    <a href="/start" class="landing-button">Create Your free 2025 New Year's Resolution</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="landing-section bg-white">
+        <div class="container mx-auto px-4">
+            <div class="landing-features-grid">
+                <!-- Feature 1 -->
+                <div class="text-center">
+                    <div class="landing-feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">AI-Powered Insights</h3>
+                    <p class="text-gray-600">Get personalized recommendations based on your goals, lifestyle, and location.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="text-center">
+                    <div class="landing-feature-icon">
+                        <i class="fas fa-map-signs"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Actionable Plans</h3>
+                    <p class="text-gray-600">Receive detailed, step-by-step guidance with specific milestones and resources.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="text-center">
+                    <div class="landing-feature-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Connected Resources</h3>
+                    <p class="text-gray-600">Access curated links to tools, communities, and local resources to support your journey.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="landing-section bg-gray-50">
+        <div class="container mx-auto px-3">
+            <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+            <div class="max-w-4xl mx-auto">
+                <div class="landing-steps-grid">
+                    <div class="text-center">
+                        <div class="landing-step-circle">1</div>
+                        <h3 class="font-semibold mb-2">Answer Questions</h3>
+                        <p class="text-gray-600">Share your goals for 2025</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="landing-step-circle">2</div>
+                        <h3 class="font-semibold mb-2">AI Analysis</h3>
+                        <p class="text-gray-600">AI digs in to learn more about your goals</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="landing-step-circle">3</div>
+                        <h3 class="font-semibold mb-2">Get Your Plan</h3>
+                        <p class="text-gray-600">Receive your personalized resolution</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="landing-hero py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-white">&copy; 2024 ResolutionPal. Built by Dylan Sellberg</p>
+            <div class="mt-4">
+                <a href="https://www.linkedin.com/in/dylsell" target="_blank" rel="noopener noreferrer" class="text-white mx-2">
+                    <i class="fab fa-linkedin fa-lg"></i>
+                </a>
+                <a href="https://twitter.com/dylsell" target="_blank" rel="noopener noreferrer" class="text-white mx-2">
+                    <i class="fab fa-twitter fa-lg"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %} 

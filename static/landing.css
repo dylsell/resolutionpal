@@ -1,0 +1,81 @@
+/* Landing Page Specific Styles */
+.landing-hero {
+    background: linear-gradient(to bottom, #FC3D4C, #CC3140);
+}
+
+.landing-button {
+    background-color: white;
+    color: #FC3D4C;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.landing-button:hover {
+    background-color: rgb(253, 242, 242); /* pink-50 equivalent */
+}
+
+.landing-feature-icon {
+    color: #FC3D4C;
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+}
+
+.landing-step-circle {
+    background-color: #FC3D4C;
+    color: white;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.landing-cta {
+    background-color: #FC3D4C;
+}
+
+.landing-text-light {
+    color: rgb(252, 231, 243); /* pink-100 equivalent */
+}
+
+/* Responsive Grid Layouts */
+.landing-features-grid {
+    display: grid;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.landing-steps-grid {
+    display: grid;
+    gap: 2rem;
+    padding: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .landing-features-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .landing-steps-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Section Spacing */
+.landing-section {
+    padding: 4rem 1rem;
+}
+
+@media (min-width: 768px) {
+    .landing-section {
+        padding: 6rem 1rem;
+    }
+} 
