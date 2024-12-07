@@ -27,19 +27,31 @@ CORS(app)
 app.static_folder = os.path.abspath('static')
 app.static_url_path = '/static'
 
-# Create or load the assistant
+# Store assistant IDs
+question_assistant_id = None
+resolution_assistant_id = None
+
 def create_question_assistant():
     """Create or retrieve the question assistant"""
+    global question_assistant_id
+    
+    # Try to reuse existing assistant
+    if question_assistant_id:
+        try:
+            return client.beta.assistants.retrieve(question_assistant_id)
+        except:
+            question_assistant_id = None
+    
+    # Look for existing assistant
     assistants = client.beta.assistants.list()
     for assistant in assistants.data:
         if assistant.name == "Question Assistant":
             print("Found existing question assistant")
-            print("Deleting existing assistant to update instructions")
-            client.beta.assistants.delete(assistant_id=assistant.id)
-            break
+            question_assistant_id = assistant.id
+            return assistant
             
     print("Creating new question assistant")
-    return client.beta.assistants.create(
+    assistant = client.beta.assistants.create(
         name="Question Assistant",
         instructions="""You are an expert resolution coach that asks questions to help users create meaningful and achievable New Year's resolutions. Your role is to gather specific, actionable information through a series of targeted questions.
 
@@ -110,19 +122,30 @@ def create_question_assistant():
         Remember: Your questions should help gather specific, actionable information to create meaningful resolutions. Never use numerical scales or ratings - they don't provide meaningful insights for resolution planning.""",
         model="gpt-4o-mini"
     )
+    question_assistant_id = assistant.id
+    return assistant
 
 def create_resolution_assistant():
     """Create or retrieve the resolution assistant"""
+    global resolution_assistant_id
+    
+    # Try to reuse existing assistant
+    if resolution_assistant_id:
+        try:
+            return client.beta.assistants.retrieve(resolution_assistant_id)
+        except:
+            resolution_assistant_id = None
+    
+    # Look for existing assistant
     assistants = client.beta.assistants.list()
     for assistant in assistants.data:
         if assistant.name == "Resolution Assistant":
             print("Found existing resolution assistant")
-            print("Deleting existing assistant to update instructions")
-            client.beta.assistants.delete(assistant_id=assistant.id)
-            break
+            resolution_assistant_id = assistant.id
+            return assistant
             
     print("Creating new resolution assistant")
-    return client.beta.assistants.create(
+    assistant = client.beta.assistants.create(
         name="Resolution Assistant",
         instructions="""You are an expert resolution coach that creates highly personalized New Year's resolutions.
         Your role is to analyze the user's responses and create a detailed, actionable plan that reflects their
@@ -221,8 +244,10 @@ def create_resolution_assistant():
         accessible through relevant, working links.""",
         model="gpt-4o-mini"
     )
+    resolution_assistant_id = assistant.id
+    return assistant
 
-# Create the assistants at startup
+# Create or retrieve the assistants at startup
 question_assistant = create_question_assistant()
 resolution_assistant = create_resolution_assistant()
 print(f"Question Assistant ID: {question_assistant.id}")
