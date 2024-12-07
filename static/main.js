@@ -541,117 +541,84 @@ function parseChoiceOptions(questionText) {
     return options;
 }
 
-function displayQuestion(data) {
-    console.log('Displaying question:', data);
-    const form = document.getElementById('question-form');
-    const question = data.question;
+function displayQuestion(question) {
+    const questionForm = document.getElementById('question-form');
+    if (!questionForm) return;
 
-    // Extract the question type from the format [TYPE] Question text
-    const typeMatch = question.match(/^\[(.*?)\]/);
-    if (!typeMatch) {
-        console.error('Question type not found in:', question);
-        return;
-    }
+    // Check if it's a CHOICE question
+    if (question.startsWith('[CHOICE]')) {
+        // Extract the question text and choices
+        const questionText = question.replace('[CHOICE]', '').split(':')[0].trim();
+        const choicesText = question.split(':')[1]?.trim() || '';
+        const choices = choicesText
+            .split(/,\s*|\s+or\s+/) // Split by comma or "or"
+            .map(choice => choice.replace(/[?.]$/, '').trim()) // Remove punctuation and trim
+            .filter(choice => choice); // Remove empty strings
 
-    const type = typeMatch[1].toUpperCase();  // Ensure type is uppercase for comparison
-    // Remove the type prefix and extract options if present
-    let questionText = question.replace(/^\[.*?\]\s*/, '').trim();
-    let options = [];
-
-    // Extract options for CHOICE questions
-    if (type === 'CHOICE') {
-        const optionsMatch = questionText.match(/\((.*?)\)$/);
-        if (optionsMatch) {
-            options = optionsMatch[1].split(',').map(opt => opt.trim());
-            // Remove the options part from the question text
-            questionText = questionText.replace(/\s*\(.*?\)$/, '');
-        }
-    }
-
-    let optionsHtml = '';
-    if (type === 'YES/NO') {
-        optionsHtml = `
-            <div class="flex gap-4 justify-center mt-6">
-                <button type="button" 
-                        onclick="handleAnswer('Yes')"
-                        class="px-8 py-3 rounded-lg 
-                               text-xl font-medium
-                               bg-white border-2 border-[#FC3D4C]/50
-                               text-[#213343] hover:bg-[#FC3D4C]/5
-                               transition-all duration-200
-                               hover:border-[#FC3D4C]
-                               focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50">
-                    Yes
-                </button>
-                <button type="button" 
-                        onclick="handleAnswer('No')"
-                        class="px-8 py-3 rounded-lg 
-                               text-xl font-medium
-                               bg-white border-2 border-[#FC3D4C]/50
-                               text-[#213343] hover:bg-[#FC3D4C]/5
-                               transition-all duration-200
-                               hover:border-[#FC3D4C]
-                               focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50">
-                    No
-                </button>
-            </div>`;
-    } else if (type === 'CHOICE' && options.length > 0) {
-        optionsHtml = `
-            <div class="grid gap-3 mt-6 max-h-[60vh] overflow-y-auto pr-2">
-                ${options.map(option => `
-                    <button type="button" 
-                            onclick="handleAnswer('${option.replace(/'/g, "\\'")}')"
+        questionForm.innerHTML = `
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-[#213343] mb-6">${questionText}?</h2>
+                <div class="grid gap-3">
+                    ${choices.map(choice => `
+                        <button 
+                            onclick="submitAnswer('${choice}')"
                             class="w-full text-left px-6 py-4 rounded-lg 
                                    text-xl font-medium
                                    bg-white border-2 border-[#FC3D4C]/50
                                    text-[#213343] hover:bg-[#FC3D4C]/5
                                    transition-all duration-200
                                    hover:border-[#FC3D4C]
-                                   focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50">
-                        ${option}
-                    </button>
-                `).join('')}
-            </div>`;
+                                   focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
+                                   active:bg-[#FC3D4C]/10">
+                            ${choice}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     } else {
-        // TEXT type or any other type
-        optionsHtml = `
-            <div class="relative mt-6">
-                <input
-                    type="text"
-                    class="w-full px-6 py-4 rounded-lg 
-                           text-xl font-medium bg-white 
-                           border-2 border-[#FC3D4C]/50
-                           text-[#213343] 
-                           focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
-                           focus:border-[#FC3D4C]"
-                    placeholder="Type your answer here..."
-                    onkeypress="handleKeyPress(event)"
-                >
-                <button onclick="handleTextAnswer()"
-                        class="continue-button w-full mt-4 py-4 px-6 bg-[#FC3D4C] text-white rounded-lg 
-                               hover:bg-[#FC3D4C]/90 transition-colors
-                               disabled:opacity-50 disabled:cursor-not-allowed">
-                    Continue →
-                </button>
-            </div>`;
+        // Regular text input for non-CHOICE questions
+        questionForm.innerHTML = `
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-[#213343]">${question}</h2>
+                <div class="relative mt-6">
+                    <input
+                        type="text"
+                        id="answer-input"
+                        class="w-full px-6 py-4 rounded-lg 
+                               text-xl font-medium bg-white 
+                               border-2 border-[#FC3D4C]/50
+                               text-[#213343] 
+                               focus:outline-none focus:ring-2 
+                               focus:ring-[#FC3D4C]/50
+                               focus:border-[#FC3D4C]"
+                        placeholder="Type your answer here..."
+                        onkeypress="if(event.key === 'Enter') submitAnswerFromInput()"
+                    >
+                    <button 
+                        onclick="submitAnswerFromInput()"
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2
+                               px-6 py-2 bg-[#FC3D4C] text-white rounded-lg
+                               hover:bg-[#FC3D4C]/90 transition-colors">
+                        Next
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus the input
+        const input = document.getElementById('answer-input');
+        if (input) input.focus();
     }
+    
+    questionForm.style.display = 'block';
+}
 
-    // Update progress bar
-    const progressPercentage = ((currentQuestionNumber + 1) / 10) * 100;
-    const progressFill = document.getElementById('progress-fill');
-    if (progressFill) {
-        progressFill.style.width = `${progressPercentage}%`;
+function submitAnswerFromInput() {
+    const input = document.getElementById('answer-input');
+    if (input && input.value.trim()) {
+        submitAnswer(input.value.trim());
     }
-
-    form.innerHTML = `
-        <div class="space-y-6">
-            <div class="text-sm text-[#213343]/70 mb-2">Question ${currentQuestionNumber + 1} of 10</div>
-            <h2 class="text-4xl font-bold text-[#213343]">${questionText}</h2>
-            ${optionsHtml}
-        </div>`;
-
-    form.style.display = 'block';
-    document.getElementById('user-info-form').style.display = 'none';
 }
 
 // Handle text input submission
