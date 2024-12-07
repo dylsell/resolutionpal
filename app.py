@@ -9,7 +9,6 @@ import traceback
 from datetime import datetime
 import time
 import markdown
-from asgiref.wsgi import WsgiToAsgi
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +20,12 @@ if not api_key:
 
 # Configure OpenAI
 client = OpenAI(api_key=api_key)
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)
+app.static_folder = os.path.abspath('static')
+app.static_url_path = '/static'
 
 # Create or load the assistant
 def create_question_assistant():
@@ -216,13 +221,6 @@ def create_resolution_assistant():
         accessible through relevant, working links.""",
         model="gpt-4o-mini"
     )
-
-# Initialize Flask app and create assistant
-app = Flask(__name__)
-asgi_app = WsgiToAsgi(app)
-CORS(app)
-app.static_folder = os.path.abspath('static')
-app.static_url_path = '/static'
 
 # Create the assistants at startup
 question_assistant = create_question_assistant()
