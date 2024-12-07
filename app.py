@@ -9,6 +9,7 @@ import traceback
 from datetime import datetime
 import time
 import markdown
+from asgiref.wsgi import WsgiToAsgi
 
 # Load environment variables
 load_dotenv()
@@ -218,6 +219,7 @@ def create_resolution_assistant():
 
 # Initialize Flask app and create assistant
 app = Flask(__name__)
+asgi_app = WsgiToAsgi(app)
 CORS(app)
 app.static_folder = os.path.abspath('static')
 app.static_url_path = '/static'
