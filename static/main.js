@@ -6,6 +6,8 @@ let isGeneratingResolution = false;
 let generationTimeout = null;
 let currentUserInfoQuestion = 0;
 let threadId = null;
+let questionAssistantId = null;
+let resolutionAssistantId = null;
 
 const userInfoQuestions = [
     {
@@ -36,7 +38,7 @@ const userInfoQuestions = [
             "Relationships 💝",
             "Learning & Education 📚",
             "Creative Projects 🎨",
-            "Travel & Adventure ��",
+            "Travel & Adventure 🌎",
             "Sustainability & Environment 🌿",
             "Community & Social Impact 🤝"
         ],
@@ -418,10 +420,20 @@ loadingStyles.textContent = `
 `;
 document.head.appendChild(loadingStyles);
 
-// Start AI questions after user info is complete
+function displayLoadingState(container, message = 'Processing your response...') {
+    container.innerHTML = `
+        <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div class="loading-container">
+                <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading...">
+            </div>
+            <h2 class="text-2xl font-bold text-[#213343] mb-4">${message}</h2>
+            <p class="text-lg text-[#213343]/70">Please wait a moment...</p>
+        </div>
+    `;
+}
+
 async function startAIQuestions() {
     try {
-        // Hide user info form and show question form
         const userInfoForm = document.getElementById('user-info-form');
         const questionForm = document.getElementById('question-form');
         
@@ -429,74 +441,74 @@ async function startAIQuestions() {
             throw new Error('Required form elements not found');
         }
         
-        // Show loading state in the question form
-        questionForm.innerHTML = `
-            <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                <div class="loading-container mb-8">
-                    <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading...">
-                </div>
-                <h2 class="text-4xl font-bold text-[#213343] mb-4">Starting Your Resolution Journey</h2>
-                <p class="text-xl text-[#213343]/70">Preparing your personalized questions...</p>
-            </div>
-        `;
-        
+        // Show loading state
         userInfoForm.style.display = 'none';
         questionForm.style.display = 'block';
+        displayLoadingState(questionForm, 'Starting Your Resolution Journey');
         
-        console.log('Sending user info:', userInfo);
         const response = await fetch('/start_session', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                name: userInfo.name || 'User',
-                location: userInfo.location || '',
-                resolutionType: userInfo.resolutionCategory || '',
-                specificResolution: userInfo.resolutionType || ''
+                name: userInfo.name,
+                location: userInfo.location,
+                resolutionType: userInfo.resolutionType,
+                specificResolution: userInfo.specificResolution
             })
         });
 
         const data = await response.json();
-        console.log('Session started:', data);
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to start session');
-        }
-        
         if (data.error) {
             throw new Error(data.error);
         }
-        
-        // Store the thread ID
+
         threadId = data.threadId;
+        questionAssistantId = data.question_assistant_id;
+        resolutionAssistantId = data.resolution_assistant_id;
         
-        if (!data.question) {
-            throw new Error('No question received from the assistant');
-        }
-        
-        // Display the first question
-        displayQuestion(data);
+        displayQuestion(data.question);
+        currentQuestionNumber = data.questionNumber;
     } catch (error) {
-        console.error('Error in startAIQuestions:', error);
+        console.error('Error starting AI questions:', error);
+        handleError(error);
+    }
+}
+
+async function submitAnswer(answer) {
+    try {
         const questionForm = document.getElementById('question-form');
-        if (questionForm) {
-            questionForm.innerHTML = `
-                <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                    <div class="text-[#FC3D4C] mb-6">
-                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-[#213343] mb-4">Oops! Something went wrong</h2>
-                    <p class="text-lg text-[#213343]/70 mb-6">${error.message}</p>
-                    <button onclick="location.reload()" 
-                            class="px-6 py-3 bg-[#FC3D4C] text-white rounded-lg hover:bg-[#FC3D4C]/90 transition-colors">
-                        Try Again
-                    </button>
-                </div>
-            `;
+        displayLoadingState(questionForm, 'Processing your response');
+        
+        const response = await fetch('/get_next_question', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                threadId: threadId,
+                answer: answer,
+                questionNumber: currentQuestionNumber,
+                question_assistant_id: questionAssistantId,
+                resolution_assistant_id: resolutionAssistantId
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
         }
+
+        if (data.isComplete) {
+            displayResolution(data.resolution);
+        } else {
+            displayQuestion(data.question);
+            currentQuestionNumber = data.questionNumber;
+        }
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+        handleError(error);
     }
 }
 
@@ -1127,4 +1139,5 @@ function toggleOtherInput(button) {
             input.focus();
         }
     }
+}
 }
