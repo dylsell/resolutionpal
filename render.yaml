@@ -15,3 +15,9 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: WEB_CONCURRENCY
+        value: "4"
+      - key: PYTHON_WORKER
+        value: "gunicorn"
+      - key: PYTHON_WORKER_CLASS
+        value: "sync"
