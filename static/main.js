@@ -36,7 +36,7 @@ const userInfoQuestions = [
             "Relationships 💝",
             "Learning & Education 📚",
             "Creative Projects 🎨",
-            "Travel & Adventure ",
+            "Travel & Adventure 🌎",
             "Sustainability & Environment 🌿",
             "Community & Social Impact 🤝"
         ],
