@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if landing_page %}ResolutionPal - Your AI Resolution Coach{% else %}Create Your Resolution{% endif %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Resolutionpal.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='Resolutionpal.png') }}">
+    <title>ResolutionPal - Your AI Resolution Guide</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/styles.css') }}">
     <!-- Add Font Awesome for icons -->
@@ -14,7 +12,6 @@
     <!-- Landing page specific styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
     {% endif %}
-    {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-50">
     {% if not landing_page %}
