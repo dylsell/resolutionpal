@@ -220,4 +220,20 @@ input:-webkit-autofill:focus {
 #loading-overlay .loading-avatar {
     width: 120px;
     height: 120px;
+}
+
+/* Resolution Plan Link Styles */
+.resolution-content a {
+    color: #FC3D4C;  /* Using your brand color */
+    text-decoration: underline;
+    transition: all 0.2s ease-in-out;
+}
+
+.resolution-content a:hover {
+    color: #d62638;  /* Slightly darker shade for hover */
+    text-decoration: none;
+}
+
+.resolution-content a:visited {
+    color: #a61d2b;  /* Even darker shade for visited links */
 } 
