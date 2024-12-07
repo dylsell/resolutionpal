@@ -2,8 +2,10 @@ services:
   - type: web
     name: resolutionpal
     env: python
-    buildCommand: npm install && npm run build:css && pip install -r requirements.txt
-    startCommand: find / -name "gunicorn.conf.py" 2>/dev/null || true && gunicorn app:app --bind 0.0.0.0:$PORT
+    buildCommand: |
+      rm -rf /etc/gunicorn.conf.py /etc/gunicorn.d/* 2>/dev/null || true
+      npm install && npm run build:css && pip install -r requirements.txt
+    startCommand: gunicorn --log-level debug app:app --bind=0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -11,3 +13,5 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: GUNICORN_CMD_ARGS
+        value: "--worker-class=sync"
