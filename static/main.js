@@ -446,6 +446,13 @@ async function startAIQuestions() {
         questionForm.style.display = 'block';
         displayLoadingState(questionForm, 'Starting Your Resolution Journey');
         
+        console.log('Sending initial data:', {
+            name: userInfo.name,
+            location: userInfo.location,
+            resolutionType: userInfo.resolutionType,
+            specificResolution: userInfo.specificResolution
+        });
+
         const response = await fetch('/start_session', {
             method: 'POST',
             headers: {
@@ -459,165 +466,242 @@ async function startAIQuestions() {
             })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to start session');
+        }
+
         const data = await response.json();
+        console.log('Received response:', data);
+
         if (data.error) {
             throw new Error(data.error);
+        }
+
+        if (!data.threadId || !data.question_assistant_id || !data.resolution_assistant_id) {
+            throw new Error('Missing required session data from server');
         }
 
         threadId = data.threadId;
         questionAssistantId = data.question_assistant_id;
         resolutionAssistantId = data.resolution_assistant_id;
         
-        displayQuestion(data.question);
+        if (!data.question) {
+            throw new Error('No question received from server');
+        }
+
+        displayQuestion(data);
         currentQuestionNumber = data.questionNumber;
     } catch (error) {
         console.error('Error starting AI questions:', error);
-        handleError(error);
+        const questionForm = document.getElementById('question-form');
+        if (questionForm) {
+            questionForm.innerHTML = `
+                <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                    <div class="text-[#FC3D4C] mb-6">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-[#213343] mb-4">Oops! Something went wrong</h2>
+                    <p class="text-lg text-[#213343]/70 mb-6">${error.message}</p>
+                    <button onclick="location.reload()" 
+                            class="px-6 py-3 bg-[#FC3D4C] text-white rounded-lg hover:bg-[#FC3D4C]/90 transition-colors">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+        // Show the user info form again
+        const userInfoForm = document.getElementById('user-info-form');
+        if (userInfoForm) {
+            userInfoForm.style.display = 'block';
+        }
     }
 }
 
 async function submitAnswer(answer) {
     try {
         const questionForm = document.getElementById('question-form');
-        displayLoadingState(questionForm, 'Processing your response');
-        
-        const response = await fetch('/get_next_question', {
+        if (!questionForm) return;
+
+        // Show loading state
+        displayLoadingState(questionForm, 'Processing your answer...');
+
+        console.log('Submitting answer:', answer);
+        console.log('Current thread ID:', threadId);
+        console.log('Current question assistant ID:', questionAssistantId);
+
+        const response = await fetch('/submit_answer', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                threadId: threadId,
                 answer: answer,
-                questionNumber: currentQuestionNumber,
-                question_assistant_id: questionAssistantId,
-                resolution_assistant_id: resolutionAssistantId
+                threadId: threadId,
+                questionAssistantId: questionAssistantId,
+                resolutionAssistantId: resolutionAssistantId,
+                questionNumber: currentQuestionNumber
             })
         });
 
+        if (!response.ok) {
+            throw new Error('Failed to submit answer');
+        }
+
         const data = await response.json();
+        console.log('Received response:', data);
+
         if (data.error) {
             throw new Error(data.error);
         }
 
-        if (data.isComplete) {
+        // Check if we're done with questions
+        if (data.done) {
             displayResolution(data.resolution);
-        } else {
-            displayQuestion(data.question);
-            currentQuestionNumber = data.questionNumber;
+            return;
         }
+
+        // Update the current question number
+        currentQuestionNumber = data.questionNumber;
+
+        // Display the next question
+        displayQuestion(data);
     } catch (error) {
         console.error('Error submitting answer:', error);
-        handleError(error);
+        const questionForm = document.getElementById('question-form');
+        if (questionForm) {
+            showErrorMessage('Failed to submit answer. Please try again.');
+        }
     }
-}
-
-// Helper function to parse choice options
-function parseChoiceOptions(questionText) {
-    console.log('Parsing options from:', questionText);
-    
-    // First try to find options in parentheses
-    const optionsMatch = questionText.match(/\((.*?)\)/);
-    if (!optionsMatch) {
-        console.warn('No options found in parentheses');
-        return [];
-    }
-
-    // Get the options string from inside the parentheses
-    const optionsString = optionsMatch[1];
-    console.log('Found options string:', optionsString);
-
-    // Split options by comma OR "or" OR "and", handling whitespace
-    const options = optionsString
-        .split(/\s*,\s*|\s+or\s+|\s+and\s+/)
-        .map(opt => opt.trim())
-        .filter(opt => opt && opt.toLowerCase() !== 'other'); // Remove empty strings and existing "Other"
-
-    console.log('Parsed options:', options);
-    
-    // Always add "Other" as the final option
-    options.push('Other');
-    
-    return options;
-}
-
-function displayQuestion(question) {
-    const questionForm = document.getElementById('question-form');
-    if (!questionForm) return;
-
-    // Check if it's a CHOICE question
-    if (question.startsWith('[CHOICE]')) {
-        // Extract the question text and choices
-        const questionText = question.replace('[CHOICE]', '').split(':')[0].trim();
-        const choicesText = question.split(':')[1]?.trim() || '';
-        const choices = choicesText
-            .split(/,\s*|\s+or\s+/) // Split by comma or "or"
-            .map(choice => choice.replace(/[?.]$/, '').trim()) // Remove punctuation and trim
-            .filter(choice => choice); // Remove empty strings
-
-        questionForm.innerHTML = `
-            <div class="space-y-6">
-                <h2 class="text-2xl font-bold text-[#213343] mb-6">${questionText}?</h2>
-                <div class="grid gap-3">
-                    ${choices.map(choice => `
-                        <button 
-                            onclick="submitAnswer('${choice}')"
-                            class="w-full text-left px-6 py-4 rounded-lg 
-                                   text-xl font-medium
-                                   bg-white border-2 border-[#FC3D4C]/50
-                                   text-[#213343] hover:bg-[#FC3D4C]/5
-                                   transition-all duration-200
-                                   hover:border-[#FC3D4C]
-                                   focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
-                                   active:bg-[#FC3D4C]/10">
-                            ${choice}
-                        </button>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    } else {
-        // Regular text input for non-CHOICE questions
-        questionForm.innerHTML = `
-            <div class="space-y-6">
-                <h2 class="text-2xl font-bold text-[#213343]">${question}</h2>
-                <div class="relative mt-6">
-                    <input
-                        type="text"
-                        id="answer-input"
-                        class="w-full px-6 py-4 rounded-lg 
-                               text-xl font-medium bg-white 
-                               border-2 border-[#FC3D4C]/50
-                               text-[#213343] 
-                               focus:outline-none focus:ring-2 
-                               focus:ring-[#FC3D4C]/50
-                               focus:border-[#FC3D4C]"
-                        placeholder="Type your answer here..."
-                        onkeypress="if(event.key === 'Enter') submitAnswerFromInput()"
-                    >
-                    <button 
-                        onclick="submitAnswerFromInput()"
-                        class="absolute right-4 top-1/2 transform -translate-y-1/2
-                               px-6 py-2 bg-[#FC3D4C] text-white rounded-lg
-                               hover:bg-[#FC3D4C]/90 transition-colors">
-                        Next
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        // Focus the input
-        const input = document.getElementById('answer-input');
-        if (input) input.focus();
-    }
-    
-    questionForm.style.display = 'block';
 }
 
 function submitAnswerFromInput() {
     const input = document.getElementById('answer-input');
     if (input && input.value.trim()) {
         submitAnswer(input.value.trim());
+    }
+}
+
+function displayQuestion(data) {
+    console.log('Displaying question data:', data);
+    const questionForm = document.getElementById('question-form');
+    if (!questionForm) {
+        console.error('Question form element not found');
+        return;
+    }
+
+    // Handle the question data structure
+    let questionData = data.question;
+    if (!questionData) {
+        console.error('No question data received:', data);
+        showErrorMessage('Failed to load question. Please try again.');
+        return;
+    }
+
+    // If questionData is a string, try to parse it as JSON
+    if (typeof questionData === 'string') {
+        try {
+            questionData = JSON.parse(questionData);
+        } catch (e) {
+            console.error('Failed to parse question data:', e);
+            questionData = {
+                type: 'TEXT',
+                text: questionData
+            };
+        }
+    }
+
+    console.log('Processing question data:', questionData);
+
+    // Extract question properties with validation
+    const type = questionData.type || 'TEXT';
+    const text = questionData.text || 'Error loading question';
+    const options = Array.isArray(questionData.options) ? questionData.options : [];
+
+    console.log('Processed question:', { type, text, options });
+
+    // Create the question container with proper styling
+    questionForm.innerHTML = `
+        <div class="space-y-6 max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-[#FC3D4C]/10">
+                <h2 class="text-2xl font-bold text-[#213343] mb-6">${text}</h2>
+                <div class="mt-6">
+                    ${type === 'CHOICE' ? `
+                        <div class="grid gap-3">
+                            ${options.map((option, index) => `
+                                <button 
+                                    onclick="submitAnswer('${option.replace(/'/g, "\\'")}')"
+                                    class="w-full text-left px-6 py-4 rounded-lg 
+                                           text-lg font-medium
+                                           bg-white border-2 border-[#FC3D4C]/20
+                                           text-[#213343] hover:bg-[#FC3D4C]/5
+                                           transition-all duration-200
+                                           hover:border-[#FC3D4C]
+                                           focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
+                                           active:bg-[#FC3D4C]/10">
+                                    <span class="inline-block w-8 h-8 leading-8 text-center 
+                                                bg-[#FC3D4C]/10 text-[#FC3D4C] rounded-full 
+                                                mr-3 font-bold">
+                                        ${index + 1}
+                                    </span>
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                    ` : type === 'YES/NO' ? `
+                        <div class="grid grid-cols-2 gap-4">
+                            ${['Yes', 'No'].map(option => `
+                                <button 
+                                    onclick="submitAnswer('${option}')"
+                                    class="w-full text-center px-6 py-4 rounded-lg 
+                                           text-xl font-medium
+                                           bg-white border-2 border-[#FC3D4C]/20
+                                           text-[#213343] hover:bg-[#FC3D4C]/5
+                                           transition-all duration-200
+                                           hover:border-[#FC3D4C]
+                                           focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
+                                           active:bg-[#FC3D4C]/10">
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="answer-input"
+                                class="w-full px-6 py-4 rounded-lg 
+                                       text-lg font-medium bg-white 
+                                       border-2 border-[#FC3D4C]/20
+                                       text-[#213343] 
+                                       focus:outline-none focus:ring-2 
+                                       focus:ring-[#FC3D4C]/50
+                                       focus:border-[#FC3D4C]
+                                       placeholder-[#213343]/40"
+                                placeholder="Type your answer here..."
+                                onkeypress="if(event.key === 'Enter') submitAnswerFromInput()"
+                            >
+                            <button 
+                                onclick="submitAnswerFromInput()"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2
+                                       px-6 py-2 bg-[#FC3D4C] text-white rounded-lg
+                                       hover:bg-[#FC3D4C]/90 transition-colors
+                                       focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50">
+                                Next
+                            </button>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Focus the input if it's a text question
+    if (type === 'TEXT') {
+        const input = document.getElementById('answer-input');
+        if (input) input.focus();
     }
 }
 
@@ -737,18 +821,103 @@ async function handleAnswer(answer) {
 }
 
 function displayResolution(resolution) {
-    const resultsDiv = document.getElementById('results');
-    const resolutionsList = document.getElementById('resolutions-list');
+    console.log('Starting resolution display...');
     
-    // Add the resolution-content class to the container
-    resolutionsList.className = 'space-y-6 resolution-content';
-    
-    // Display the resolution
-    resolutionsList.innerHTML = resolution;
-    resultsDiv.style.display = 'block';
-    
-    // Hide the question form
-    document.getElementById('question-form').style.display = 'none';
+    try {
+        // First, get and check all containers
+        const resultsDiv = document.getElementById('results');
+        const resolutionsList = document.getElementById('resolutions-list');
+        const userInfoForm = document.getElementById('user-info-form');
+        const questionForm = document.getElementById('question-form');
+        
+        if (!resultsDiv || !resolutionsList) {
+            throw new Error('Required resolution display elements not found');
+        }
+
+        // Hide other containers first
+        if (userInfoForm) userInfoForm.style.display = 'none';
+        if (questionForm) questionForm.style.display = 'none';
+        
+        // Reset and show results container
+        resultsDiv.style.display = 'block';
+        resolutionsList.innerHTML = ''; // Clear any existing content
+        
+        if (!resolution) {
+            throw new Error('No resolution content received');
+        }
+
+        // Create the resolution container
+        const container = document.createElement('div');
+        container.className = 'bg-white rounded-xl p-8 shadow-sm border border-[#FC3D4C]/10';
+        
+        // Decode HTML entities first
+        const decodedContent = resolution
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&');
+        
+        console.log('Decoded content:', decodedContent);
+        
+        // Sanitize the decoded content
+        let sanitizedContent;
+        if (typeof DOMPurify !== 'undefined') {
+            console.log('Using DOMPurify');
+            sanitizedContent = DOMPurify.sanitize(decodedContent, {
+                ALLOWED_TAGS: ['div', 'h1', 'h2', 'h3', 'p', 'ul', 'li', 'b', 'a', 'br', 'span'],
+                ALLOWED_ATTR: ['class', 'href', 'target', 'rel'],
+                ADD_ATTR: ['target'],
+                ALLOW_DATA_ATTR: false
+            });
+        } else {
+            console.warn('DOMPurify not found, using decoded content directly');
+            sanitizedContent = decodedContent;
+        }
+        
+        // Set the content
+        container.innerHTML = sanitizedContent;
+        
+        // Process links
+        container.querySelectorAll('a').forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            // Add styling to links
+            link.className = 'text-[#FC3D4C] hover:text-[#FC3D4C]/80 underline';
+        });
+        
+        // Add to document
+        resolutionsList.appendChild(container);
+        
+        // Ensure results are visible and scroll into view
+        resultsDiv.style.display = 'block';
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        console.log('Resolution display complete');
+    } catch (error) {
+        console.error('Error displaying resolution:', error);
+        const resultsDiv = document.getElementById('results');
+        if (resultsDiv) {
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = `
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl p-8 shadow-sm border border-[#FC3D4C]/10 text-center">
+                        <div class="text-[#FC3D4C] mb-6">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-[#213343] mb-4">Error Displaying Resolution</h2>
+                        <p class="text-lg text-[#213343]/70 mb-6">${error.message}</p>
+                        <button onclick="location.reload()" 
+                                class="px-6 py-3 bg-[#FC3D4C] text-white rounded-lg hover:bg-[#FC3D4C]/90 transition-colors">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
 }
 
 // Simple function to calculate text similarity
@@ -1106,5 +1275,4 @@ function toggleOtherInput(button) {
             input.focus();
         }
     }
-}
 }

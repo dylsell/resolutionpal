@@ -2,239 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles */
-body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #FFFFFF;
-    color: #213343;
-}
-
-/* Selection styling */
-::selection {
-    background: rgba(252, 61, 76, 0.2);
-}
-
-/* Loading animation */
-@keyframes twinkle {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.loading-star {
-    animation: twinkle 1.5s ease-in-out infinite;
-    display: inline-block;
-}
-
-/* Autofill styles */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #213343;
-    -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Custom components */
 @layer components {
+    /* Resolution content styles */
+    .resolution-card {
+        @apply bg-white rounded-xl p-8 shadow-sm border border-[#FC3D4C]/10;
+    }
+
+    .resolution-card h1 {
+        @apply text-4xl font-bold text-[#FC3D4C] mb-8;
+    }
+
+    .resolution-card h2 {
+        @apply text-2xl font-bold text-[#213343] mt-8 mb-4;
+    }
+
+    .resolution-card h3 {
+        @apply text-xl font-semibold text-[#213343] mt-6 mb-3;
+    }
+
+    .resolution-card p {
+        @apply text-[#213343]/80 text-lg mb-4 leading-relaxed;
+    }
+
+    .resolution-card ul {
+        @apply space-y-2 mb-6 ml-4;
+    }
+
+    .resolution-card li {
+        @apply text-[#213343]/80 text-lg leading-relaxed pl-6 relative;
+    }
+
+    .resolution-card li::before {
+        content: "•";
+        @apply text-[#FC3D4C] absolute left-0 font-bold;
+    }
+
+    .resolution-card b {
+        @apply font-bold text-[#213343];
+    }
+
+    .resolution-card a {
+        @apply text-[#FC3D4C] hover:text-[#FC3D4C]/80 underline;
+    }
+
+    /* Other existing styles */
     .question-card {
-        @apply max-w-2xl mx-auto w-full animate-fade-in;
-    }
-
-    .input-field {
-        @apply w-full bg-transparent border-b-2 border-[#FBDBE8] px-2 py-4 text-2xl 
-               text-[#213343] placeholder-[#213343]/50 focus:border-[#FC3D4C] focus:outline-none
-               transition-colors duration-200;
-    }
-
-    .option-button {
-        @apply w-full text-left px-6 py-4 rounded-lg 
-               text-xl font-medium
-               bg-white border-2 border-[#FC3D4C]
-               text-[#213343] hover:bg-[#FC3D4C]/5
-               transition-all duration-200;
-    }
-
-    .option-button.selected {
-        @apply bg-[#FC3D4C]/10 border-[#FC3D4C] 
-               shadow-lg shadow-[#FC3D4C]/20;
+        @apply bg-white rounded-xl shadow-lg p-8 w-full max-w-2xl;
     }
 
     .progress-bar {
-        @apply fixed top-0 left-0 w-full h-1 bg-[#FBDBE8]/20 z-50;
+        @apply fixed top-0 left-0 w-full h-2 bg-[#FC3D4C]/10;
     }
 
     .progress-fill {
-        @apply h-full bg-[#FC3D4C] transition-all duration-300 ease-out;
+        @apply h-full bg-[#FC3D4C] transition-all duration-500;
     }
 
-    /* Multi-choice selected state */
-    .multichoice-option {
-        @apply w-full text-left px-6 py-4 rounded-lg 
-               border-2 border-transparent
-               bg-[#FC3D4C] hover:bg-[#FC3D4C]/90
-               text-white transition-all duration-200;
-    }
-
-    .multichoice-option.selected {
-        @apply bg-[#FC3D4C] border-[#FBDBE8] shadow-lg shadow-[#FBDBE8]/20;
-    }
-
-    /* Continue button */
-    .continue-button {
-        @apply bg-[#FC3D4C] text-white hover:bg-[#FC3D4C]/90
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
-    }
-
-    /* Number input */
-    input[type="number"] {
-        @apply bg-white border-2 border-[#FBDBE8] text-[#213343]
-               focus:border-[#FC3D4C] focus:ring-[#FC3D4C];
-    }
-
-    /* Text area */
-    textarea {
-        @apply bg-white border-2 border-[#FBDBE8] text-[#213343]
-               focus:border-[#FC3D4C] focus:ring-[#FC3D4C];
-    }
-
+    /* Loading animation */
     .loading-container {
-        @apply fixed inset-0 bg-white bg-opacity-90 
-               flex items-center justify-center z-50
-               text-6xl;
+        @apply w-32 h-32 mx-auto mb-8;
     }
-}
 
-/* Animation classes */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-10px); }
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-.animate-fade-out {
-    animation: fadeOut 0.5s ease-out forwards;
-}
-
-/* Resolution card styles */
-.resolution-card {
-    @apply bg-white border border-[#FBDBE8] rounded-xl p-6 space-y-4
-           animate-fade-in opacity-0;
-    animation-fill-mode: forwards;
-    animation-delay: calc(var(--index, 0) * 100ms);
-}
-
-.resolution-title {
-    @apply text-2xl font-bold text-[#213343];
-}
-
-.resolution-description {
-    @apply text-[#213343]/80;
-}
-
-.resolution-timeframe {
-    @apply text-[#FC3D4C] font-medium;
-}
-
-.milestone-list {
-    @apply space-y-2 text-[#213343];
-}
-
-/* Question navigation */
-.question-nav {
-    @apply flex items-center justify-between text-[#213343]/70 mt-6;
-}
-
-.question-counter {
-    @apply flex items-center gap-2;
-}
-
-.nav-hint {
-    @apply text-sm;
-}
-
-/* Completion screen */
-.completion-screen {
-    @apply text-center text-[#213343] space-y-6;
-}
-
-.sparkle-icon {
-    @apply w-16 h-16 mx-auto text-[#FC3D4C] animate-pulse;
-}
-
-/* Loading Animation Styles */
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.loading-avatar {
-    width: 120px;
-    height: 120px;
-    animation: bounce 1s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
+    .loading-avatar {
+        @apply w-full h-full object-contain animate-bounce;
     }
-    50% {
-        transform: translateY(-20px);
+
+    /* Button styles */
+    .button-primary {
+        @apply px-6 py-3 bg-[#FC3D4C] text-white rounded-lg 
+               hover:bg-[#FC3D4C]/90 transition-colors
+               focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50;
     }
-}
 
-/* Ensure image maintains aspect ratio */
-.loading-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
+    .button-secondary {
+        @apply px-6 py-3 border-2 border-[#FC3D4C] text-[#FC3D4C] rounded-lg
+               hover:bg-[#FC3D4C]/5 transition-colors
+               focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50;
+    }
 
-/* Loading Overlay */
-#loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-#loading-overlay .loading-avatar {
-    width: 120px;
-    height: 120px;
-}
-
-/* Resolution Plan Link Styles */
-.resolution-content a {
-    color: #FC3D4C;  /* Using your brand color */
-    text-decoration: underline;
-    transition: all 0.2s ease-in-out;
-}
-
-.resolution-content a:hover {
-    color: #d62638;  /* Slightly darker shade for hover */
-    text-decoration: none;
-}
-
-.resolution-content a:visited {
-    color: #a61d2b;  /* Even darker shade for visited links */
+    /* Input styles */
+    .input-primary {
+        @apply w-full px-6 py-4 rounded-lg text-xl font-medium bg-white 
+               border-2 border-[#FC3D4C]/50 text-[#213343] 
+               focus:outline-none focus:ring-2 focus:ring-[#FC3D4C]/50
+               focus:border-[#FC3D4C];
+    }
 } 

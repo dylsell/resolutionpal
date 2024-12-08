@@ -9,6 +9,8 @@ import traceback
 from datetime import datetime
 import time
 import markdown
+from pydantic import BaseModel, Field
+from typing import Literal, List, Optional, Union
 
 # Load environment variables
 load_dotenv()
@@ -21,131 +23,92 @@ if not api_key:
 # Configure OpenAI
 client = OpenAI(api_key=api_key)
 
+# Question type definitions
+class Question(BaseModel):
+    type: str = Field(..., description="Question type: TEXT, CHOICE, or YES/NO")
+    text: str = Field(..., description="The question text")
+    options: Optional[List[str]] = Field(default=None, description="Options for CHOICE questions")
+
+class QuestionChoice(BaseModel):
+    type: Literal["CHOICE"]
+    text: str
+    options: List[str]
+
+class QuestionYesNo(BaseModel):
+    type: Literal["YES/NO"]
+    text: str
+
+class QuestionText(BaseModel):
+    type: Literal["TEXT"]
+    text: str
+
+def format_question_data(data: dict) -> dict:
+    """Format and validate question data to ensure consistent structure."""
+    formatted = {
+        "type": data.get("type", "TEXT").upper(),
+        "text": data.get("text") or data.get("question", ""),
+        "options": data.get("options", None)
+    }
+    
+    # Clean up the type
+    if formatted["type"] not in ["TEXT", "CHOICE", "YES/NO"]:
+        formatted["type"] = "TEXT"
+    
+    # Ensure text is a string
+    formatted["text"] = str(formatted["text"]).strip()
+    
+    # Handle options for CHOICE type
+    if formatted["type"] == "CHOICE" and not formatted["options"]:
+        formatted["type"] = "TEXT"  # Fallback to TEXT if no options provided
+    
+    # Clean up options if present
+    if formatted["options"]:
+        formatted["options"] = [str(opt).strip() for opt in formatted["options"]]
+    
+    return formatted
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 app.static_folder = os.path.abspath('static')
 app.static_url_path = '/static'
 
-# Store assistant IDs
-question_assistant_id = None
-resolution_assistant_id = None
-
 def create_question_assistant():
-    """Create or retrieve the question assistant"""
-    global question_assistant_id
-    
-    # Try to reuse existing assistant
-    if question_assistant_id:
-        try:
-            return client.beta.assistants.retrieve(question_assistant_id)
-        except:
-            question_assistant_id = None
-    
-    # Look for existing assistant
-    assistants = client.beta.assistants.list()
-    for assistant in assistants.data:
-        if assistant.name == "Question Assistant":
-            print("Found existing question assistant")
-            question_assistant_id = assistant.id
-            return assistant
-            
-    print("Creating new question assistant")
-    assistant = client.beta.assistants.create(
-        name="Question Assistant",
-        instructions="""You are an expert resolution coach that asks questions to help users create meaningful and achievable New Year's resolutions. Your role is to gather specific, actionable information through a series of targeted questions.
+    """Create a new assistant for asking questions"""
+    return client.beta.assistants.create(
+        name="Resolution Question Assistant",
+        instructions="""You are an expert at asking insightful questions to help people create meaningful New Year's resolutions. 
+Your role is to ask one question at a time to understand the person's goals, motivations, and circumstances.
 
-        QUESTION TYPES TO USE:
-        1. [YES/NO] - For clear binary choices
-           Example: "Have you tried setting similar goals before?"
-           Example: "Would you prefer working with a mentor?"
+IMPORTANT: You must ALWAYS format your responses as valid JSON with this structure:
+{
+    "type": "TEXT" | "CHOICE" | "YES/NO",
+    "text": "Your question here",
+    "options": ["option1", "option2", "option3"]  // Only for CHOICE type
+}
 
-        2. [CHOICE] - For gathering specific preferences (ALWAYS provide 4-6 relevant options plus "Other")
-           Format: Question text (Option 1, Option 2, Option 3, Option 4, Other)
-           Example: "How would you like to track your progress? (Mobile App, Written Journal, Calendar, Spreadsheet, Other)"
-           Example: "When do you have the most free time? (Early Morning, Lunch Break, Evening, Weekends, Other)"
+Guidelines:
+1. Keep questions concise (under 15 words)
+2. Make questions specific to their resolution focus
+3. Use appropriate question types:
+   - TEXT: For open-ended responses
+   - CHOICE: When offering specific options (must include options array)
+   - YES/NO: For binary decisions
+4. Never use numerical scales or ratings
+5. Focus on understanding their specific situation and goals
 
-        3. [TEXT] - For brief, specific details (use sparingly)
-           Example: "What's your biggest obstacle to achieving this goal?"
-           Example: "Name one person who could help you with this goal."
-
-        ABSOLUTELY FORBIDDEN QUESTIONS:
-        ❌ ANY questions about confidence levels
-        ❌ ANY questions using numerical scales (1-10, 1-5, etc.)
-        ❌ ANY questions about motivation levels
-        ❌ ANY questions asking "how much" or "how many"
-        ❌ ANY questions using percentages
-        ❌ ANY questions about measuring feelings or emotions
-        ❌ ANY questions specifically about location or environment
-
-        REQUIRED REPLACEMENTS FOR COMMON QUESTIONS:
-        Instead of asking about confidence:
-        ❌ BAD: "How confident are you about achieving this? (1-10)"
-        ✓ GOOD: "[CHOICE] What best describes your readiness? (Ready to Start, Need More Planning, Want a Mentor, Have Some Concerns, Other)"
-
-        Instead of asking about motivation:
-        ❌ BAD: "How motivated are you? (1-10)"
-        ✓ GOOD: "[CHOICE] What drives you toward this goal? (Personal Growth, Career Impact, Family Support, Health Benefits, Other)"
-
-        Instead of asking about difficulty:
-        ❌ BAD: "How challenging does this feel? (1-10)"
-        ✓ GOOD: "[CHOICE] What's your biggest concern? (Time Management, Learning Curve, Resources Needed, External Support, Other)"
-
-        Instead of asking about time commitment:
-        ❌ BAD: "How many hours can you commit? (1-10)"
-        ✓ GOOD: "[CHOICE] When can you work on this? (Daily Short Sessions, Weekly Deep Focus, Weekends Only, Flexible Schedule, Other)"
-
-        QUESTION SEQUENCE:
-        1. Start with [YES/NO] questions to establish baseline experience
-        2. Use [CHOICE] questions to understand preferences and habits
-        3. Use [TEXT] questions sparingly for specific details
-        4. Always build on previous answers
-        5. Focus on gathering actionable information
-
-        IMPORTANT RULES:
-        1. Keep questions under 15 words
-        2. Never repeat questions
-        3. Always provide specific options for [CHOICE] questions
-        4. Include "Other" as the final option in [CHOICE] questions
-        5. Focus on practical, actionable information
-        6. Build context from previous answers
-
-        FINAL CHECK:
-        Before sending each question, verify:
-        1. It does NOT ask for any numerical rating
-        2. It does NOT ask about confidence levels
-        3. It does NOT ask about motivation levels
-        4. It DOES provide specific options for [CHOICE] questions
-        5. It IS focused on gathering actionable information
-        6. It does NOT ask about location specifics
-
-        Remember: Your questions should help gather specific, actionable information to create meaningful resolutions. Never use numerical scales or ratings - they don't provide meaningful insights for resolution planning.""",
-        model="gpt-4o-mini"
+Example responses:
+{"type": "YES/NO", "text": "Have you tried setting this type of goal before?"}
+{"type": "CHOICE", "text": "What's your biggest obstacle?", "options": ["Time", "Motivation", "Resources", "Knowledge"]}
+{"type": "TEXT", "text": "What would success look like for this resolution?"}""",
+        model="gpt-4-1106-preview",
+        tools=[]
     )
-    question_assistant_id = assistant.id
-    return assistant
 
 def create_resolution_assistant():
-    """Create or retrieve the resolution assistant"""
-    global resolution_assistant_id
-    
-    # Try to reuse existing assistant
-    if resolution_assistant_id:
-        try:
-            return client.beta.assistants.retrieve(resolution_assistant_id)
-        except:
-            resolution_assistant_id = None
-    
-    # Look for existing assistant
-    assistants = client.beta.assistants.list()
-    for assistant in assistants.data:
-        if assistant.name == "Resolution Assistant":
-            print("Found existing resolution assistant")
-            resolution_assistant_id = assistant.id
-            return assistant
-            
+    """Create a new resolution assistant for this session"""
     print("Creating new resolution assistant")
-    assistant = client.beta.assistants.create(
+    return client.beta.assistants.create(
         name="Resolution Assistant",
         instructions="""You are an expert resolution coach that creates highly personalized New Year's resolutions.
         Your role is to analyze the user's responses and create a detailed, actionable plan that reflects their
@@ -244,14 +207,6 @@ def create_resolution_assistant():
         accessible through relevant, working links.""",
         model="gpt-4o-mini"
     )
-    resolution_assistant_id = assistant.id
-    return assistant
-
-# Create or retrieve the assistants at startup
-question_assistant = create_question_assistant()
-resolution_assistant = create_resolution_assistant()
-print(f"Question Assistant ID: {question_assistant.id}")
-print(f"Resolution Assistant ID: {resolution_assistant.id}")
 
 @app.route('/')
 def landing():
@@ -278,8 +233,20 @@ def start_session():
         print(f"Resolution Type: {resolution_type}")
         print(f"Specific Resolution: {specific_resolution}")
         
+        # Create new assistants for this session
+        question_assistant = create_question_assistant()
+        resolution_assistant = create_resolution_assistant()
+        print(f"Created assistants - Question: {question_assistant.id}, Resolution: {resolution_assistant.id}")
+        
         thread = client.beta.threads.create()
         print(f"Thread created with ID: {thread.id}")
+        
+        # Store assistant IDs in the response
+        session_data = {
+            "question_assistant_id": question_assistant.id,
+            "resolution_assistant_id": resolution_assistant.id,
+            "thread_id": thread.id
+        }
         
         # Format initial message without indentation
         initial_message = (
@@ -299,15 +266,23 @@ def start_session():
         
         # Format instructions without indentation
         instructions = (
-            f"Ask the first question to understand {name}'s goals. "
-            f"They are interested in {resolution_type} resolutions, specifically: {specific_resolution}. "
-            "Remember to:\n"
-            "1. Keep your question under 15 words\n"
-            "2. Start with a type indicator [YES/NO], [CHOICE], or [TEXT]\n"
-            "3. Make it specific to their resolution focus\n"
-            "4. Don't ask about general interests - we already know their focus\n"
-            "5. Never use numerical scales or ratings\n"
-            "6. For preferences, always use [CHOICE] with specific options"
+            f"You are helping {name} create a meaningful and achievable New Year's resolution focused on {resolution_type}. "
+            f"Their initial idea is: {specific_resolution}\n\n"
+            "Ask a strategic question that will help you understand what they need to succeed. "
+            "Your goal is to gather information that will help create a SMART resolution "
+            "(Specific, Measurable, Achievable, Relevant, Time-bound).\n\n"
+            "Consider asking about:\n"
+            "- Their current situation and starting point\n"
+            "- Past experiences and what worked/didn't work\n"
+            "- Available resources and support systems\n"
+            "- Potential obstacles and how to overcome them\n"
+            "- Their definition of success\n"
+            "- Timeline and milestones\n\n"
+            "Format your question as JSON:\n"
+            "1. Keep it under 15 words\n"
+            "2. Make it specific to their resolution focus\n"
+            "3. Use this structure:\n"
+            '{"type": "TEXT" | "CHOICE" | "YES/NO", "text": "Your question", "options": ["option1", "option2"] // for CHOICE only}'
         ).strip()
         
         print("Creating run for first question...")
@@ -320,32 +295,59 @@ def start_session():
         print(f"Run created with ID: {run.id}")
         
         run = wait_for_run(thread.id, run.id)
+        print(f"Run completed with status: {run.status}")
         
         messages = client.beta.threads.messages.list(thread_id=thread.id)
         first_question = messages.data[0].content[0].text.value
+        print(f"Raw first question: {first_question}")
         
-        # Validate the question format
-        if not first_question.startswith('['):
-            print("Warning: First question doesn't start with type indicator")
-            # Try to infer the type and add it
-            if "yes or no" in first_question.lower() or first_question.lower().startswith("do you"):
-                first_question = "[YES/NO] " + first_question
-            elif "choose" in first_question.lower() or "select" in first_question.lower() or "prefer" in first_question.lower():
-                first_question = "[CHOICE] " + first_question
+        try:
+            # Try to parse as JSON
+            if first_question.strip().startswith('{'):
+                question_data = json.loads(first_question)
             else:
-                first_question = "[TEXT] " + first_question
-        
-        # Check question length
-        words = first_question.split()
-        if len(words) > 20:  # Allowing a bit more than 15 to account for the type indicator
-            print("Warning: First question too long, truncating...")
-            first_question = ' '.join(words[:20])
-        
-        return jsonify({
-            "question": first_question,
-            "threadId": thread.id,
-            "questionNumber": 1
-        })
+                # If not JSON, create a text question
+                question_data = {
+                    "type": "TEXT",
+                    "text": first_question.strip()
+                }
+            
+            # Format the data
+            formatted_data = format_question_data(question_data)
+            print(f"Formatted question data: {formatted_data}")
+            
+            # Validate with Pydantic
+            question = Question(**formatted_data)
+            print(f"Validated question: {question.model_dump()}")
+            
+            response_data = {
+                "question": question.model_dump(),
+                "threadId": thread.id,
+                "questionNumber": 1,
+                **session_data
+            }
+            print(f"Sending response: {response_data}")
+            
+            return jsonify(response_data)
+            
+        except Exception as e:
+            print(f"Error processing first question: {str(e)}")
+            print(f"Falling back to text question")
+            
+            # Fallback to simple text question
+            response_data = {
+                "question": {
+                    "type": "TEXT",
+                    "text": first_question.strip(),
+                    "options": None
+                },
+                "threadId": thread.id,
+                "questionNumber": 1,
+                **session_data
+            }
+            print(f"Sending fallback response: {response_data}")
+            
+            return jsonify(response_data)
         
     except Exception as e:
         print(f"Error in start_session: {str(e)}")
@@ -388,6 +390,11 @@ def get_next_question():
         thread_id = data.get('threadId')
         answer = data.get('answer')
         question_number = data.get('questionNumber', 0)
+        question_assistant_id = data.get('question_assistant_id')
+        resolution_assistant_id = data.get('resolution_assistant_id')
+        
+        if not all([thread_id, question_assistant_id, resolution_assistant_id]):
+            raise ValueError("Missing required session data")
         
         print(f"Thread ID: {thread_id}")
         print(f"Previous answer: {answer}")
@@ -406,7 +413,7 @@ def get_next_question():
         print("Answer added to thread")
         
         # If we've reached 10 questions, generate the resolution
-        if question_number >= 9:  # 0-based index, so 9 means we've done 10 questions
+        if question_number >= 9:
             print("Reached final question, generating resolution...")
             return generate_resolution(thread_id)
             
@@ -414,14 +421,14 @@ def get_next_question():
         print("Creating run for next question...")
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=question_assistant.id,
+            assistant_id=question_assistant_id,
             instructions=f"""Ask question #{question_number + 1}. 
             Remember to:
             1. Keep it under 15 words
-            2. Start with the appropriate type indicator [YES/NO], [CHOICE], or [TEXT]
-            3. Make it specific to their previous answers
-            4. Never repeat a previous question
-            5. Vary the question type from the last question"""
+            2. Make it specific to their previous answers
+            3. Never repeat a previous question
+            4. Vary the question type from the last question
+            5. Return the response in the specified JSON format with type and text fields"""
         )
         print(f"Run created with ID: {run.id}")
         
@@ -431,30 +438,52 @@ def get_next_question():
         print("Retrieving assistant's response...")
         messages = client.beta.threads.messages.list(thread_id=thread_id)
         last_message = messages.data[0].content[0].text.value
-        print(f"Next question: {last_message}")
+        print(f"Raw response: {last_message}")
         
-        # Validate the question format
-        if not last_message.startswith('['):
-            print("Warning: Question doesn't start with type indicator")
-            # Try to infer the type and add it
-            if "yes or no" in last_message.lower() or last_message.lower().startswith("do you"):
-                last_message = "[YES/NO] " + last_message
-            elif "choose" in last_message.lower() or "select" in last_message.lower() or "prefer" in last_message.lower():
-                last_message = "[CHOICE] " + last_message
-            else:
-                last_message = "[TEXT] " + last_message
-        
-        # Check question length
-        words = last_message.split()
-        if len(words) > 20:  # Allowing a bit more than 15 to account for the type indicator
-            print("Warning: Question too long, truncating...")
-            last_message = ' '.join(words[:20])
-        
-        return jsonify({
-            "question": last_message,
-            "threadId": thread_id,
-            "questionNumber": question_number + 1
-        })
+        try:
+            # Parse the response as JSON
+            question_data = json.loads(last_message)
+            # Format the data to match our expected structure
+            formatted_data = format_question_data(question_data)
+            # Validate with Pydantic
+            question = Question(**formatted_data)
+            
+            return jsonify({
+                "question": question.model_dump(),
+                "threadId": thread_id,
+                "questionNumber": question_number + 1,
+                "question_assistant_id": question_assistant_id,
+                "resolution_assistant_id": resolution_assistant_id
+            })
+            
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON response: {e}")
+            # Fallback to text extraction
+            return jsonify({
+                "question": {
+                    "type": "TEXT",
+                    "text": last_message.strip(),
+                    "options": None
+                },
+                "threadId": thread_id,
+                "questionNumber": question_number + 1,
+                "question_assistant_id": question_assistant_id,
+                "resolution_assistant_id": resolution_assistant_id
+            })
+            
+        except Exception as e:
+            print(f"Error processing question: {e}")
+            return jsonify({
+                "question": {
+                    "type": "TEXT",
+                    "text": "Error processing question. Please try again.",
+                    "options": None
+                },
+                "threadId": thread_id,
+                "questionNumber": question_number + 1,
+                "question_assistant_id": question_assistant_id,
+                "resolution_assistant_id": resolution_assistant_id
+            })
         
     except TimeoutError as e:
         print(f"Timeout error: {str(e)}")
@@ -564,7 +593,7 @@ def generate_resolution(thread_id):
         
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=resolution_assistant.id,
+            assistant_id=resolution_assistant_id,
             instructions=instructions
         )
         
@@ -646,6 +675,323 @@ def render_resolution():
         
     except Exception as e:
         print(f"Error in render_resolution: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    try:
+        print("\n=== Processing Answer Submission ===")
+        data = request.json
+        thread_id = data.get('threadId')
+        answer = data.get('answer')
+        question_assistant_id = data.get('questionAssistantId')
+        resolution_assistant_id = data.get('resolutionAssistantId')
+        question_number = int(data.get('questionNumber', 1))
+
+        print(f"Current Question Number: {question_number}")
+        print(f"Thread ID: {thread_id}")
+        print(f"Answer: {answer}")
+
+        if not all([thread_id, answer, question_assistant_id, resolution_assistant_id]):
+            raise ValueError("Missing required data for answer submission")
+
+        # Add the user's answer to the thread
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=answer
+        )
+        print("Added user's answer to thread")
+
+        # We want to generate resolution after the 5th question (when question_number is 5)
+        if question_number >= 5:
+            print(f"\n=== Generating Resolution (Question {question_number}) ===")
+            
+            # Get all messages and organize them into Q&A pairs
+            messages = client.beta.threads.messages.list(thread_id=thread_id)
+            conversation_pairs = []
+            
+            # Messages are in reverse chronological order, so we need to reverse them
+            message_list = list(reversed(messages.data))
+            
+            # Skip the initial user info message
+            for i in range(1, len(message_list), 2):
+                if i + 1 < len(message_list):
+                    question = message_list[i].content[0].text.value
+                    answer = message_list[i + 1].content[0].text.value
+                    # Clean up the question format if it's JSON
+                    if question.strip().startswith('{'):
+                        try:
+                            q_data = json.loads(question)
+                            question = q_data.get('text', question)
+                        except:
+                            pass
+                    conversation_pairs.append(f"Q: {question}\nA: {answer}")
+            
+            # Get the initial user info
+            initial_info = message_list[0].content[0].text.value
+            
+            # Format the conversation history
+            conversation_history = (
+                f"Initial User Information:\n{initial_info}\n\n"
+                "Conversation History:\n" + 
+                "\n\n".join(conversation_pairs)
+            )
+            
+            print("\nFormatted conversation history:")
+            print(conversation_history)
+            
+            # Create new thread for resolution
+            new_thread = client.beta.threads.create()
+            print(f"\nCreated new thread for resolution: {new_thread.id}")
+            
+            # Add the formatted conversation history
+            client.beta.threads.messages.create(
+                thread_id=new_thread.id,
+                role="user",
+                content=f"""Please create a personalized resolution plan based on this conversation:
+
+{conversation_history}
+
+The user has shared their goals, challenges, and preferences through this conversation.
+Please use all of this information to create a detailed, personalized resolution plan."""
+            )
+            
+            instructions = """
+IMPORTANT CONTEXT:
+The user has provided detailed information about their goals, preferences, and current situation.
+Pay special attention to their specific answers about routines, preferences, and challenges.
+Use all of this context to create a highly personalized plan.
+
+REQUIRED SECTIONS:
+1. Title - Make it personal and specific to their goal
+2. Vision - 2-3 sentences describing their ideal end state
+3. Key Goals - 3-5 specific, measurable sub-goals
+4. Personal Motivation - Connect to their specific reasons and situation
+5. Action Plan - Break down by time periods, with relevant links:
+   - January (Getting Started) - Include links to initial resources
+   - February-March (Building Habits) - Link to tools and communities
+   - April-June (Growing Stronger) - Add progressive resource links
+   - July-September (Maintaining Momentum) - Include support group links
+   - October-December (Achieving Milestones) - Link to advanced resources
+6. Milestones - 4-5 specific checkpoints with dates:
+   Example: <b>January 15</b>: Set up <a href="URL">recommended tool</a>
+7. Resources & Tools - Include links to all recommended resources
+8. Support System - Link to relevant communities and groups
+9. Encouragement - One sentence of personalized motivation
+
+HTML FORMATTING REQUIREMENTS:
+Format your response using this exact structure:
+
+<div class="resolution-card">
+    <h1 class="resolution-title">[Personal and specific title]</h1>
+    
+    <h2>Your Vision</h2>
+    <p>[2-3 sentences describing ideal end state]</p>
+    
+    <h2>Key Goals</h2>
+    <ul>
+        [3-5 specific, measurable sub-goals]
+    </ul>
+    
+    <h2>Why This Matters</h2>
+    <p>[Connect to their specific motivation and situation]</p>
+    
+    <h2>Action Plan</h2>
+    <h3>January (Getting Started)</h3>
+    <ul>
+        [3-5 specific actions with resource links]
+    </ul>
+    
+    <h3>February-March (Building Habits)</h3>
+    <ul>
+        [3-5 actions with community links]
+    </ul>
+    
+    <h3>April-June (Growing Stronger)</h3>
+    <ul>
+        [3-5 actions with progressive resources]
+    </ul>
+    
+    <h3>July-September (Maintaining Momentum)</h3>
+    <ul>
+        [3-5 actions with support links]
+    </ul>
+    
+    <h3>October-December (Achieving Milestones)</h3>
+    <ul>
+        [3-5 actions with advanced resources]
+    </ul>
+    
+    <h2>Key Milestones</h2>
+    <ul>
+        [4-5 specific checkpoints with dates and links]
+    </ul>
+    
+    <h2>Tools and Resources</h2>
+    <ul>
+        [4-6 specific tools/resources with links]
+    </ul>
+    
+    <h2>Your Support System</h2>
+    <ul>
+        [List of communities and support groups with links]
+    </ul>
+    
+    <h2>Words of Encouragement</h2>
+    <p>[Personal and motivating message based on their situation]</p>
+</div>
+
+PERSONALIZATION RULES:
+1. Reference specific details they mentioned
+2. Use their name and location naturally
+3. Incorporate their stated preferences
+4. Address their specific challenges
+5. Build on their existing habits
+6. Reference their support system
+7. Match their experience level
+8. Include location-specific suggestions where relevant
+9. Consider seasonal factors if applicable
+10. Balance general and local resources
+
+LINK REQUIREMENTS:
+1. Every recommended resource must have a working link
+2. Include links for:
+   - Tools and apps
+   - Local facilities
+   - Online communities
+   - Learning resources
+   - Equipment or supplies
+   - Support groups
+   - Professional services
+3. Use descriptive link text
+4. Embed links naturally in content
+
+FORMATTING REMINDERS:
+- Use proper HTML tags throughout
+- Format dates as <b>Date</b>: Description
+- Use <b>bold</b> for emphasis
+- Use <a href="URL">descriptive text</a> for links
+- Keep paragraphs focused and concise
+- Make every section highly specific to their situation
+- Use their location data to enhance the plan naturally
+
+Important:
+1. Make the resolution SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
+2. Use bullet points for all lists
+3. Keep the tone encouraging but realistic
+4. Base everything on the user's actual responses
+5. DO NOT ask any questions - this is the final resolution
+6. Use the exact HTML structure provided"""
+
+            try:
+                print("Creating resolution run...")
+                run = client.beta.threads.runs.create(
+                    thread_id=new_thread.id,
+                    assistant_id=resolution_assistant_id,
+                    instructions=instructions
+                )
+                print(f"Created resolution run with ID: {run.id}")
+                
+                run = wait_for_run(new_thread.id, run.id)
+                print(f"Resolution run completed with status: {run.status}")
+                
+                messages = client.beta.threads.messages.list(thread_id=new_thread.id)
+                resolution = messages.data[0].content[0].text.value
+                print("Successfully generated resolution")
+                print(f"Resolution length: {len(resolution)} characters")
+                
+                return jsonify({
+                    "done": True,
+                    "resolution": resolution
+                })
+            except Exception as e:
+                print(f"Error generating resolution: {str(e)}")
+                print(f"Full resolution error traceback: {traceback.format_exc()}")
+                raise
+
+        # Get next question
+        print(f"\n=== Getting Question {question_number + 1} ===")
+        instructions = (
+            "Based on the previous answers, ask your next strategic question to help create a meaningful resolution. "
+            "Each question should build towards creating a SMART resolution "
+            "(Specific, Measurable, Achievable, Relevant, Time-bound).\n\n"
+            "Consider what information you still need about:\n"
+            "- Specific goals and desired outcomes\n"
+            "- How to measure progress\n"
+            "- Resources and support needed\n"
+            "- Realistic timeframes\n"
+            "- Potential obstacles\n"
+            "- Motivation and commitment level\n\n"
+            "Format your question as JSON:\n"
+            "1. Keep it under 15 words\n"
+            "2. Make it specific to their resolution focus\n"
+            "3. Use this structure:\n"
+            '{"type": "TEXT" | "CHOICE" | "YES/NO", "text": "Your question", "options": ["option1", "option2"] // for CHOICE only}'
+        ).strip()
+
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=question_assistant_id,
+            instructions=instructions
+        )
+        print(f"Created question run with ID: {run.id}")
+
+        run = wait_for_run(thread_id, run.id)
+        print(f"Question run completed with status: {run.status}")
+
+        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        next_question = messages.data[0].content[0].text.value
+        print(f"Raw question response: {next_question}")
+
+        try:
+            # Try to parse as JSON
+            if next_question.strip().startswith('{'):
+                question_data = json.loads(next_question)
+            else:
+                # If not JSON, create a text question
+                question_data = {
+                    "type": "TEXT",
+                    "text": next_question.strip()
+                }
+
+            # Format the data
+            formatted_data = format_question_data(question_data)
+            print(f"Formatted question data: {formatted_data}")
+
+            # Validate with Pydantic
+            question = Question(**formatted_data)
+            print(f"Validated question: {question.model_dump()}")
+
+            return jsonify({
+                "question": question.model_dump(),
+                "threadId": thread_id,
+                "questionNumber": question_number + 1,
+                "questionAssistantId": question_assistant_id,
+                "resolutionAssistantId": resolution_assistant_id,
+                "done": False
+            })
+
+        except Exception as e:
+            print(f"Error processing next question: {str(e)}")
+            print(f"Falling back to text question")
+
+            return jsonify({
+                "question": {
+                    "type": "TEXT",
+                    "text": next_question.strip(),
+                    "options": None
+                },
+                "threadId": thread_id,
+                "questionNumber": question_number + 1,
+                "questionAssistantId": question_assistant_id,
+                "resolutionAssistantId": resolution_assistant_id,
+                "done": False
+            })
+
+    except Exception as e:
+        print(f"Error in submit_answer: {str(e)}")
+        print(f"Full traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
