@@ -68,7 +68,7 @@ def format_question_data(data: dict) -> dict:
     return formatted
 
 # Initialize Flask app
-app = Flask(__name__, static_url_path='', static_folder='static')
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
 # Ensure the static directory exists
@@ -76,20 +76,22 @@ with app.app_context():
     os.makedirs('static', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
 
-# Serve static files with caching headers
-@app.route('/<path:filename>')
+# Simple static file serving
+@app.route('/static/<path:filename>')
 def serve_static(filename):
-    if filename.startswith('static/'):
-        response = send_from_directory('.', filename)
-        # Cache for 1 hour
-        response.headers['Cache-Control'] = 'public, max-age=3600'
-        return response
-    return app.send_static_file(filename)
+    try:
+        return send_from_directory('static', filename)
+    except Exception as e:
+        app.logger.error(f"Error serving static file {filename}: {str(e)}")
+        return f"Error serving file: {str(e)}", 500
 
-# Specific route for images
-@app.route('/static/images/<path:filename>')
-def serve_image(filename):
-    return send_from_directory('static/images', filename, cache_timeout=3600)
+@app.route('/<path:filename>')
+def serve_root_static(filename):
+    try:
+        return app.send_static_file(filename)
+    except Exception as e:
+        app.logger.error(f"Error serving root static file {filename}: {str(e)}")
+        return f"Error serving file: {str(e)}", 500
 
 def create_question_assistant():
     """Create a new assistant for asking questions"""
