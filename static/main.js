@@ -424,7 +424,12 @@ function displayLoadingState(container, message = 'Processing your response...')
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
             <div class="loading-container">
-                <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading...">
+                <img 
+                    src="/static/Resolutionpal.png" 
+                    class="loading-avatar"
+                    alt="Loading..."
+                    onerror="this.onerror=null; this.src='/static/resolutionpal.png'; this.onerror=function(){this.style.display='none';}"
+                >
             </div>
             <h2 class="text-2xl font-bold text-[#213343] mb-4">${message}</h2>
             <p class="text-lg text-[#213343]/70">Please wait a moment...</p>
@@ -625,7 +630,7 @@ function displayQuestion(data) {
     // Create the question container with proper styling
     questionForm.innerHTML = `
         <div class="space-y-6 max-w-2xl mx-auto">
-            <div class="bg-white rounded-lg p-6 shadow-sm border border-[#FC3D4C]/10">
+            <div class="bg-white rounded-lg p-0 shadow-sm">
                 <h2 class="text-2xl font-bold text-[#213343] mb-6">${text}</h2>
                 <div class="mt-6">
                     ${type === 'CHOICE' ? `
