@@ -9,6 +9,63 @@ let threadId = null;
 let questionAssistantId = null;
 let resolutionAssistantId = null;
 
+// New Year's Resolution Quotes
+const inspirationalQuotes = [
+    "Be the change that you wish to see in the world. - Mahatma Gandhi",
+    "The secret of getting ahead is getting started. - Mark Twain",
+    "It is never too late to be what you might have been. - George Eliot",
+    "New year, a new chapter, a new verse, or just the same old story? Ultimately, we write it. The choice is ours. - Alex Morritt",
+    "Success is not final, failure is not fatal: It is the courage to continue that counts. - Winston Churchill",
+    "What the new year brings to you will depend a great deal on what you bring to the new year. - Vern McLellan",
+    "You are never too old to set another goal or to dream a new dream. - C.S. Lewis",
+    "Don't live the same year 75 times and call it a life. - Robin Sharma",
+    "Your life does not get better by chance, it gets better by change. - Jim Rohn",
+    "Tomorrow is the first blank page of a 365-page book. Write a good one. - Brad Paisley"
+];
+
+function getRandomQuote() {
+    return inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+}
+
+// Loading Screen Functions
+function showLoading(message = 'Loading...') {
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loading-overlay';
+    loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    loadingOverlay.innerHTML = `
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
+            <div class="loading-container mb-4">
+                <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading...">
+            </div>
+            <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
+            <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
+        </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+}
+
+function hideLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.remove();
+    }
+}
+
+function displayLoadingState(container, message = 'Processing your response...') {
+    container.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            <div class="loading-container">
+                <img src="/static/resolutionpal.png" 
+                    class="loading-avatar"
+                    alt="Loading..."
+                    style="width: 100px; height: 100px;">
+            </div>
+            <h2 class="text-2xl font-bold text-[#213343]">${message}</h2>
+            <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
+        </div>
+    `;
+}
+
 const userInfoQuestions = [
     {
         id: 'name',
@@ -382,11 +439,12 @@ function showLoading(message = 'Loading...') {
     loadingOverlay.id = 'loading-overlay';
     loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     loadingOverlay.innerHTML = `
-        <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
             <div class="loading-container mb-4">
-                <img src="/static/Resolutionpal.png" class="loading-avatar" alt="Loading...">
+                <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading...">
             </div>
-            <p class="text-xl font-medium text-[#213343]">${message}</p>
+            <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
+            <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
         </div>
     `;
     document.body.appendChild(loadingOverlay);
@@ -422,17 +480,15 @@ document.head.appendChild(loadingStyles);
 
 function displayLoadingState(container, message = 'Processing your response...') {
     container.innerHTML = `
-        <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container">
-                <img 
-                    src="/static/Resolutionpal.png" 
+                <img src="/static/resolutionpal.png" 
                     class="loading-avatar"
                     alt="Loading..."
-                    onerror="this.onerror=null; this.src='/static/resolutionpal.png'; this.onerror=function(){this.style.display='none';}"
-                >
+                    style="width: 100px; height: 100px;">
             </div>
-            <h2 class="text-2xl font-bold text-[#213343] mb-4">${message}</h2>
-            <p class="text-lg text-[#213343]/70">Please wait a moment...</p>
+            <h2 class="text-2xl font-bold text-[#213343]">${message}</h2>
+            <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
         </div>
     `;
 }
@@ -1280,4 +1336,21 @@ function toggleOtherInput(button) {
             input.focus();
         }
     }
+}
+
+async function handleSubmitQuestion(event) {
+    event.preventDefault();
+    
+    // Show loading state with custom message for final question
+    const loadingMessage = currentQuestionNumber >= 9 ? 'Creating Your Personalized Resolution Plan...' : 'Processing Your Answer...';
+    const loadingHtml = `
+        <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            <div class="loading-container mb-8">
+                <img src="/static/resolutionpal.png" class="loading-avatar" alt="Loading..." style="width: 100px; height: 100px;">
+            </div>
+            <h2 class="text-2xl font-bold text-[#213343] text-center">${loadingMessage}</h2>
+            <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
+        </div>
+    `;
+    questionForm.innerHTML = loadingHtml;
 }
