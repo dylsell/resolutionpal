@@ -42,7 +42,7 @@ function showLoading(message = 'Loading...') {
     loadingOverlay.innerHTML = `
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
             <div class="loading-container mb-4 flex justify-center">
-                <img src="resolutionpal.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
+                <img src="/static/images/loading.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
             </div>
             <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
@@ -62,7 +62,7 @@ function displayLoadingState(container, message = 'Processing your response...')
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
-                <img src="resolutionpal.png" 
+                <img src="/static/images/loading.png" 
                     class="loading-avatar w-24 h-24 object-contain animate-bounce"
                     alt="Loading...">
             </div>
@@ -447,7 +447,7 @@ function showLoading(message = 'Loading...') {
     loadingOverlay.innerHTML = `
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
             <div class="loading-container mb-4 flex justify-center">
-                <img src="resolutionpal.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
+                <img src="/static/images/loading.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
             </div>
             <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
@@ -488,7 +488,7 @@ function displayLoadingState(container, message = 'Processing your response...')
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
-                <img src="resolutionpal.png" 
+                <img src="/static/images/loading.png" 
                     class="loading-avatar w-24 h-24 object-contain animate-bounce"
                     alt="Loading...">
             </div>
@@ -1350,7 +1350,7 @@ async function handleSubmitQuestion(event) {
     const loadingHtml = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
-                <img src="resolutionpal.png" 
+                <img src="/static/images/loading.png" 
                     class="loading-avatar w-24 h-24 object-contain animate-bounce"
                     alt="Loading...">
             </div>

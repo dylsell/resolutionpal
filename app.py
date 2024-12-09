@@ -74,6 +74,7 @@ CORS(app)
 # Ensure the static directory exists
 with app.app_context():
     os.makedirs('static', exist_ok=True)
+    os.makedirs('static/images', exist_ok=True)
 
 # Serve static files with caching headers
 @app.route('/<path:filename>')
@@ -84,6 +85,11 @@ def serve_static(filename):
         response.headers['Cache-Control'] = 'public, max-age=3600'
         return response
     return app.send_static_file(filename)
+
+# Specific route for images
+@app.route('/static/images/<path:filename>')
+def serve_image(filename):
+    return send_from_directory('static/images', filename, cache_timeout=3600)
 
 def create_question_assistant():
     """Create a new assistant for asking questions"""
