@@ -2002,6 +2002,10 @@ video {
      object-fit: contain;
 }
 
+.p-0 {
+  padding: 0px;
+}
+
 .p-4 {
   padding: 1rem;
 }
