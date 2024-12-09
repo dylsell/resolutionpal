@@ -108,20 +108,21 @@ IMPORTANT: You must ALWAYS format your responses as valid JSON with this structu
 }
 
 Guidelines:
-1. Keep questions concise (under 15 words)
-2. Make questions specific to their resolution focus
-3. Use appropriate question types:
+1. Keep questions concise (under 20 words)
+2. Before asking a question, review all previous questions and answers to ensure you are building towards a well rounded 2025 new year's resolution plan
+3. Make questions specific to their resolution focus
+4. Use appropriate question types:
    - TEXT: For open-ended responses
    - CHOICE: When offering specific options (must include options array)
    - YES/NO: For binary decisions
-4. Never use numerical scales or ratings
-5. Focus on understanding their specific situation and goals
+5. Never use numerical scales or ratings
+6. Focus on understanding their specific situation and goals so that the resolution coach can create a highly personalized plan
 
 Example responses:
 {"type": "YES/NO", "text": "Have you tried setting this type of goal before?"}
 {"type": "CHOICE", "text": "What's your biggest obstacle?", "options": ["Time", "Motivation", "Resources", "Knowledge"]}
 {"type": "TEXT", "text": "What would success look like for this resolution?"}""",
-        model="gpt-4-1106-preview",
+        model="gpt-4o-mini",
         tools=[]
     )
 
@@ -723,8 +724,8 @@ def submit_answer():
         )
         print("Added user's answer to thread")
 
-        # We want to generate resolution after the 5th question (when question_number is 5)
-        if question_number >= 5:
+        # We want to generate resolution after the 10th question (when question_number is 10)
+        if question_number >= 10:
             print(f"\n=== Generating Resolution (Question {question_number}) ===")
             
             # Get all messages and organize them into Q&A pairs

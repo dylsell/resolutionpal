@@ -1648,6 +1648,11 @@ video {
   margin-right: 0.5rem;
 }
 
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -2131,6 +2136,10 @@ video {
 .text-\[\#213343\] {
   --tw-text-opacity: 1;
   color: rgb(33 51 67 / var(--tw-text-opacity, 1));
+}
+
+.text-\[\#213343\]\/60 {
+  color: rgb(33 51 67 / 0.6);
 }
 
 .text-\[\#213343\]\/70 {

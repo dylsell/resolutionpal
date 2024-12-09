@@ -1346,7 +1346,7 @@ function toggleOtherInput(button) {
 async function handleSubmitQuestion(event) {
     event.preventDefault();
     
-    const loadingMessage = currentQuestionNumber >= 9 ? 'Creating Your Personalized Resolution Plan...' : 'Processing Your Answer...';
+    const loadingMessage = currentQuestionNumber >= 10 ? 'Creating Your Personalized Resolution Plan...' : 'Processing Your Answer...';
     const loadingHtml = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
