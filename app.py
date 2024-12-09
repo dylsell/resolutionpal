@@ -68,7 +68,7 @@ def format_question_data(data: dict) -> dict:
     return formatted
 
 # Initialize Flask app
-app = Flask(__name__, static_url_path='/static', static_folder='static')
+app = Flask(__name__, static_url_path='', static_folder='static')
 CORS(app)
 
 # Ensure the static directory exists
@@ -76,12 +76,14 @@ with app.app_context():
     os.makedirs('static', exist_ok=True)
 
 # Serve static files with caching headers
-@app.route('/static/<path:filename>')
+@app.route('/<path:filename>')
 def serve_static(filename):
-    response = send_from_directory(app.static_folder, filename)
-    # Cache for 1 hour
-    response.headers['Cache-Control'] = 'public, max-age=3600'
-    return response
+    if filename.startswith('static/'):
+        response = send_from_directory('.', filename)
+        # Cache for 1 hour
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+        return response
+    return app.send_static_file(filename)
 
 def create_question_assistant():
     """Create a new assistant for asking questions"""
