@@ -72,8 +72,7 @@ app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
 # Ensure the static directory exists
-@app.before_first_request
-def ensure_static_dir():
+with app.app_context():
     os.makedirs('static', exist_ok=True)
 
 # Serve static files with caching headers
@@ -604,7 +603,7 @@ def generate_resolution(thread_id):
         
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=resolution_assistant_id,
+            assistant_id=resolution_assistant_id, # type: ignore
             instructions=instructions
         )
         
