@@ -58,3 +58,10 @@ coverage/
 .env.development
 .env.test
 .env.production
+
+# Database
+metrics.db
+*.db
+
+# Worker
+your_worker_file.py

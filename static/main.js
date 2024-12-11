@@ -39,15 +39,19 @@ function showLoading(message = 'Loading...') {
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'loading-overlay';
     loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    loadingOverlay.innerHTML = `
+    
+    // Use data URI for loading animation to prevent additional requests
+    const loadingAnimation = `
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
             <div class="loading-container mb-4 flex justify-center">
-                <img src="https://resolutionpal.com/static/images/loading.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
+                <div class="w-24 h-24 rounded-full bg-[#FC3D4C] animate-bounce"></div>
             </div>
             <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
         </div>
     `;
+    
+    loadingOverlay.innerHTML = loadingAnimation;
     document.body.appendChild(loadingOverlay);
 }
 
@@ -62,9 +66,7 @@ function displayLoadingState(container, message = 'Processing your response...')
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
-                <img src="https://resolutionpal.com/static/images/loading.png" 
-                    class="loading-avatar w-24 h-24 object-contain animate-bounce"
-                    alt="Loading...">
+                <div class="w-24 h-24 rounded-full bg-[#FC3D4C] animate-bounce"></div>
             </div>
             <h2 class="text-2xl font-bold text-[#213343]">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
@@ -444,15 +446,19 @@ function showLoading(message = 'Loading...') {
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'loading-overlay';
     loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    loadingOverlay.innerHTML = `
+    
+    // Use data URI for loading animation to prevent additional requests
+    const loadingAnimation = `
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
             <div class="loading-container mb-4 flex justify-center">
-                <img src="https://resolutionpal.com/static/images/loading.png" class="loading-avatar w-24 h-24 object-contain" alt="Loading...">
+                <div class="w-24 h-24 rounded-full bg-[#FC3D4C] animate-bounce"></div>
             </div>
             <h2 class="text-xl font-bold text-center mb-2">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
         </div>
     `;
+    
+    loadingOverlay.innerHTML = loadingAnimation;
     document.body.appendChild(loadingOverlay);
 }
 
@@ -488,9 +494,7 @@ function displayLoadingState(container, message = 'Processing your response...')
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="loading-container flex justify-center">
-                <img src="https://resolutionpal.com/static/images/loading.png" 
-                    class="loading-avatar w-24 h-24 object-contain animate-bounce"
-                    alt="Loading...">
+                <div class="w-24 h-24 rounded-full bg-[#FC3D4C] animate-bounce"></div>
             </div>
             <h2 class="text-2xl font-bold text-[#213343]">${message}</h2>
             <p class="text-[#213343]/60 text-center italic">${getRandomQuote()}</p>
