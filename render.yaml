@@ -12,7 +12,6 @@ services:
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
-    maxShutdownDelaySeconds: 90
     disk:
       name: resolutionpal-counters
       mountPath: /var/data
