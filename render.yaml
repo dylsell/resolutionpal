@@ -1,27 +1,36 @@
+# A new service: do not replace the legacy Python service in place.
+# Custom domains are attached only after the preview passes the release runbook.
 services:
   - type: web
-    name: resolutionpal
-    env: python
-    buildCommand: |
-      rm -rf .venv
-      python -m venv .venv
-      . .venv/bin/activate
-      npm install && npm run build:css && pip install -r requirements.txt
-      # Remove any existing Gunicorn configs
-      find / -name "gunicorn.conf.py" -delete 2>/dev/null || true
-      find / -name "gunicorn.config.py" -delete 2>/dev/null || true
-    startCommand: |
-      # Print Python and Gunicorn versions
-      python --version
-      gunicorn --version
-      # Start with our config file
-      gunicorn -c .gunicorn.conf.py wsgi:app
+    name: resolutionpal-2026
+    runtime: node
+    plan: 0.5c-512mb
+    region: virginia
+    repo: https://github.com/dylsell/resolutionpal
+    branch: rebuild-2026
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 90
+    disk:
+      name: resolutionpal-counters
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: FLASK_ENV
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
-      - key: PYTHONUNBUFFERED
-        value: "true"
+      - key: DATA_DIR
+        value: /var/data
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: APP_ORIGIN
+        sync: false
+      - key: RATE_LIMIT_SECRET
+        generateValue: true
+      - key: AI_MONTHLY_BUDGET_USD
+        value: "15"
+      - key: AI_DAILY_BUDGET_USD
+        value: "5"

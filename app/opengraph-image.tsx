@@ -1,0 +1,7 @@
+import { ImageResponse } from 'next/og';
+export const alt = 'Resolution Pal — A resolution that fits your real life';
+export const size = { width: 1200, height: 630 };
+export const contentType = 'image/png';
+export default function Image() {
+  return new ImageResponse(<div style={{ width: '100%', height: '100%', background: '#faf8f1', color: '#262c40', display: 'flex', padding: '64px 72px', flexDirection: 'column', fontFamily: 'sans-serif' }}><div style={{ display: 'flex', alignItems: 'center', fontSize: 30, gap: 13 }}><span style={{ display: 'flex', width: 45, height: 45, borderRadius: '50%', background: '#d9d0ef', justifyContent: 'center', alignItems: 'center' }}><svg width="32" height="32" viewBox="0 0 64 64"><path d="M32 10c2 15 7 20 22 22-15 2-20 7-22 22-2-15-7-20-22-22 15-2 20-7 22-22Z" fill="#262c40" /></svg></span>resolutionpal.</div><div style={{ display: 'flex', fontSize: 84, lineHeight: 1.05, letterSpacing: -4, maxWidth: 940, marginTop: 55 }}>A resolution that fits your real life.</div><div style={{ display: 'flex', marginTop: 34, fontSize: 25, color: '#696b75' }}>A few thoughtful questions. One clear next step.</div><div style={{ display: 'flex', marginTop: 'auto', gap: 18, fontSize: 18 }}><span style={{ padding: '10px 20px', background: '#d9d0ef', borderRadius: 30 }}>One meaningful goal</span><span style={{ padding: '10px 20px', background: '#f4dea6', borderRadius: 30 }}>Your first week + next 90 days</span><span style={{ padding: '10px 20px', background: '#e2e8d9', borderRadius: 30 }}>Free · No signup</span></div></div>, size);
+}
