@@ -2,7 +2,7 @@
 
 Turn one meaningful resolution into a realistic first week and a 90-day path. A short guided reflection leads to two personalized follow-up questions and an actionable plan. No account is required.
 
-This is the 2026 rebuild of [Resolution Pal](https://resolutionpal.com). It uses Next.js, TypeScript, React, Tailwind, and the OpenAI Responses API. The original Flask implementation remains in Git history; the rebuild is developed on `rebuild-2026` so it cannot deploy accidentally to the old Python service.
+The 2026 rebuild is live at [resolutionpal.com](https://resolutionpal.com). It uses Next.js, TypeScript, React, Tailwind, and the OpenAI Responses API. Production deploys from `rebuild-2026` to a dedicated Render Node service. The original Flask implementation remains in Git history, and its replaced service is suspended.
 
 ## Run locally
 
@@ -44,9 +44,9 @@ POST routes enforce same-origin access and bounded inputs. Request and result ty
 
 ## Deploy
 
-Use the [release runbook](docs/release-runbook.md) and `render.yaml` to create a new always-on Node service. Do not deploy this branch to the legacy Python service. The Blueprint intentionally omits custom domains until the new preview has passed validation.
+Use the [release runbook](docs/release-runbook.md) for the existing production service, deployment checks, and rollback. Do not deploy this branch to the legacy Python service. The Blueprint intentionally omits custom domains so that a recreated service must pass preview validation before moving production routing. See the [verification record](docs/verification.md) for the shipped release and completed checks.
 
-The planned baseline is $7/month compute, $0.25/month for a 1 GB disk, plus a $15 application AI allowance. Bandwidth, build overages, taxes, and domain renewal are separate. Confirm current charges in the providers before launch. See [Render pricing](https://render.com/pricing).
+The deployed baseline is $7/month compute and $0.25/month for a 1 GB disk, with a $15 application AI allowance. Extra build spending is limited to $0. Bandwidth overages, taxes, and domain renewal are separate. See [Render pricing](https://render.com/pricing).
 
 Run `npm run metrics` in the service's shell to inspect the current UTC day/month's reserved and settled AI allowance and the last seven days of aggregate events. The script opens `DATA_DIR/resolutionpal.sqlite3` read-only and does not display visitor identifiers. Locally it defaults to `./data`; pass `DATA_DIR` explicitly if your local override differs.
 
