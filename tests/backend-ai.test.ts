@@ -105,6 +105,23 @@ describe('bounded model generation', () => {
     expect(mock.create).toHaveBeenCalledTimes(2);
   });
 
+  it.each([
+    { field: 'firstWeek', category: 'first_week_budget', invalid: { ...plan, firstWeek: [{ ...plan.firstWeek[0], minutes: 6 }, ...plan.firstWeek.slice(1)] } },
+    { field: 'weeklyRoutine', category: 'weekly_budget', invalid: { ...plan, weeklyRoutine: [{ action: 'Read', frequency: 'Three times a week', minutesPerWeek: 31 }] } },
+  ])('repairs a rejected $field budget with specific bounded feedback and a fresh reservation', async ({ field, category, invalid }) => {
+    const db = store();
+    const reserve = vi.spyOn(db, 'reserve');
+    mock.create.mockResolvedValueOnce(success(invalid)).mockResolvedValueOnce(success(plan));
+    await expect(makePlan(input, db)).resolves.toEqual(plan);
+    expect(mock.create).toHaveBeenCalledTimes(2);
+    expect(mock.create.mock.calls[0][0].instructions).not.toContain('REPAIR REQUIRED');
+    expect(mock.create.mock.calls[1][0].instructions).toContain(`${field} exceeded 30 minutes`);
+    expect(mock.create.mock.calls[1][0].instructions).toContain('firstWeek total <= 30 AND weeklyRoutine total <= 30');
+    expect(mock.create.mock.calls[1][0]).toMatchObject({ max_output_tokens: 3000, store: false });
+    expect(reserve.mock.calls[1][1]).toBeGreaterThan(reserve.mock.calls[0][1]);
+    expect(db.db.prepare('SELECT count FROM events WHERE event=?').get(`ai_plan_invalid_${category}`)).toEqual({ count: 1 });
+  });
+
   it('offers prepared follow-up questions after one failure, retaining the reservation', async () => {
     const db = store(); mock.create.mockRejectedValue(new Error('Timeout'));
     const result = await makeFollowups(intake, db);

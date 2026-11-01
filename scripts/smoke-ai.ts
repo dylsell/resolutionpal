@@ -37,9 +37,9 @@ const scenarios: Scenario[] = [
     questionPattern: /writ|story|fiction|draft|creativ|phone|evening|children|15.?minute/i,
     obstaclePattern: /phone|distract|scroll/i,
     answer: (question) => {
+      if (/phone|scroll|gets in the way|support|account|remind|motivat|obstacle|distract|help/i.test(question.question)) return 'Put my phone in another room, use a 15-minute timer, and leave the writing document open.';
       if (/genre|fiction|story idea|write about|topic|character/i.test(question.question)) return 'A warm story about two neighbors who start a community garden.';
       if (/when|time of|schedule|routine|days|slot|moment/i.test(question.question)) return 'Tuesday and Thursday evenings after the children are asleep, for 15 minutes each.';
-      if (/support|account|remind|motivat|obstacle|distract|phone|help/i.test(question.question)) return 'Put my phone in another room, use a 15-minute timer, and leave the writing document open.';
       if (/progress|finish|success|achieve/i.test(question.question)) return 'A complete 900-word rough draft by day 90, even if the wording is still messy.';
       return question.options[0];
     },
@@ -59,9 +59,9 @@ const scenarios: Scenario[] = [
     questionPattern: /walk|route|rain|outside|outdoor|lunch|park|weather|20.?minute/i,
     obstaclePattern: /rain|weather|meeting|lunch/i,
     answer: (question) => {
+      if (/rain|weather|gets in the way|obstacle|barrier|help|support/i.test(question.question)) return 'On rainy days I can take a shorter walk under cover; if lunch disappears, I can go before dinner.';
       if (/where|route|place|location/i.test(question.question)) return 'A familiar loop through the neighborhood park, starting from my front door.';
       if (/when|time of|schedule|routine|days|slot|moment/i.test(question.question)) return 'Monday, Wednesday and Friday at lunch, with an early evening backup if a meeting runs late.';
-      if (/rain|weather|obstacle|barrier|help|support/i.test(question.question)) return 'On rainy days I can take a shorter walk under cover; if lunch disappears, I can go before dinner.';
       if (/progress|track|measure|remind/i.test(question.question)) return 'A check mark on my paper calendar after each walk, with no need to track distance or speed.';
       return question.options[0];
     },
@@ -80,13 +80,16 @@ function usage(store: QuotaStore) {
 }
 
 async function main() {
+  const selectedName = process.argv[2];
+  const selected = selectedName ? scenarios.filter((scenario) => scenario.name === selectedName) : scenarios;
+  if (selected.length === 0) throw new Error('Unknown synthetic scenario');
   const directory = mkdtempSync(join(tmpdir(), 'resolutionpal-smoke-'));
   let store: QuotaStore | undefined;
   const results: Record<string, unknown>[] = [];
   let allPassed = true;
   try {
     store = new QuotaStore(join(directory, 'smoke.sqlite3'), { dailyMicros: MAX_COST_MICROS, monthlyMicros: MAX_COST_MICROS });
-    for (const scenario of scenarios) {
+    for (const scenario of selected) {
       const started = Date.now();
       const before = usage(store);
       const record: Record<string, unknown> = { scenario: scenario.name, intake: scenario.intake };
