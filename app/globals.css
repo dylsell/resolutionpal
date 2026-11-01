@@ -55,3 +55,16 @@
   .site-footer>div{justify-content:flex-start;flex-wrap:wrap}
   .site-footer>p{grid-row:auto;font-size:12px;line-height:1.8}
 }
+
+/* Paginated output follows the document order without fragmenting grid columns. */
+@media print{
+  .skip-link{display:none!important}
+  .meaning-grid,.first-week-grid,.rhythm-section,.milestone-grid{display:block}
+  .meaning-card+.meaning-card{margin-top:12px}
+  .action-card{display:block}
+  .action-card+.action-card{margin-top:10px}
+  .kindness-card{margin-top:18px}
+  .milestone-card{position:static;padding:12px 0 0;border-top:1px solid #ddd}
+  .milestone-card+.milestone-card{margin-top:14px}
+  .milestone-marker{display:none}
+}
