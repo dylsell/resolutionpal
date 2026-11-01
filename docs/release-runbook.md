@@ -10,9 +10,11 @@ Target: a complete usable journey on https://resolutionpal.com, within the agree
 - Record the baseline Git revision and preserve it with the legacy tag. Record the exact new release commit after checks pass.
 - Verify a real generation request with the funded project. A valid key, successful model-list lookup, or healthy `/api/health` response does not establish available model credits. An `insufficient_quota` / `credit_balance_exhausted` response requires restoring project funding or supplying a funded project key before the real-generation launch gate can pass.
 
-## 2. Create and verify the new preview
+## 2. Deploy and verify the new preview
 
-Create a new Blueprint from `rebuild-2026` and the repository's `render.yaml`. It provisions one paid Node service, one 1 GB persistent disk at `/var/data`, and gated auto-deploys. The current `0.5c-512mb` plan is the $7/month tier formerly named Starter. [Blueprint reference](https://render.com/docs/blueprint-spec), [compute plans](https://render.com/docs/compute-plans)
+The new service is already deployed at https://resolutionpal-2026.onrender.com ([Render service](https://dashboard.render.com/web/srv-dbjnjs67bikc7381c7rg)). It was created through the public repository URL because the Git provider is not connected. Deploy checked commits from `rebuild-2026` manually on this service. See [verification evidence](verification.md) for the tested commit, first deployment, real hosted journey, and persistent-counter restart check.
+
+For recreating the service through a connected Git provider, use `rebuild-2026` and the repository's `render.yaml`. The Blueprint specifies one paid Node service, one 1 GB persistent disk at `/var/data`, and gated auto-deploys. The current `0.5c-512mb` plan is the $7/month tier formerly named Starter. [Blueprint reference](https://render.com/docs/blueprint-spec), [compute plans](https://render.com/docs/compute-plans)
 
 Push the branch with its lockfile and CI workflow, and confirm the exact release commit's CI check passes. Select the repository through Render's connected GitHub account. A service created from a public repository URL without that connection does not receive automatic deploys. `checksPass` also requires at least one detected check; if the initial service has not deployed, manually deploy the already-verified commit instead of weakening the gate. [Deploy and CI behavior](https://render.com/docs/deploys)
 
