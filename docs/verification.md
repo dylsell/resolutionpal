@@ -24,6 +24,7 @@ Recorded November 1, 2026. Local and hosted-preview verification is recorded bel
 - `npm run metrics` showed identical aggregate totals and recorded cost, with zero held reservations, before and after an actual Render restart. The running instance changed from `k5z69` to `r9j27`, confirming that verification crossed a restart rather than merely refreshing the metrics display.
 - Render's workspace build-pipeline settings show a $0 monthly spending limit for extra build minutes. The deployed service and disk have a $7.25/month baseline; the application limits AI usage to $15/month and $5/day.
 - The deployed `/api/health` returned `{"status":"ready"}` in Chrome. Hosted `robots.txt` excludes the form, plan, and API paths, and the sitemap lists the production homepage and privacy URLs.
+- Direct HTTPS checks returned 200 for the homepage and health endpoint, 400 for malformed plan JSON, and 403 for an unrelated request origin. Responses included `nosniff`, `X-Frame-Options: DENY`, and `strict-origin-when-cross-origin`; API responses used `Cache-Control: no-store`. These rejection checks made no AI calls.
 
 ## Domain baseline
 
