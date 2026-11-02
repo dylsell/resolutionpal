@@ -1,33 +1,33 @@
 {
-  "name": "twentyfiveresolutions",
+  "name": "resolutionpal",
+  "version": "2.0.0",
   "private": true,
-  "version": "0.0.1",
-  "type": "module",
+  "engines": { "node": "24.x" },
   "scripts": {
-    "dev": "concurrently \"python app.py\" \"npm run watch:css\"",
-    "build": "npm run build:css",
-    "build:css": "tailwindcss -i ./static/styles.css -o ./static/dist/styles.css",
-    "watch:css": "tailwindcss -i ./static/styles.css -o ./static/dist/styles.css --watch"
+    "dev": "next dev --hostname 0.0.0.0 --port 3007",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "metrics": "tsx scripts/metrics.ts"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.0",
-    "@emotion/react": "^11.11.0",
-    "@emotion/styled": "^11.11.0",
-    "framer-motion": "^10.12.16",
-    "openai": "^4.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/fraunces": "^5.2.7",
+    "next": "16.4.3",
+    "openai": "7.47.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.15",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.0.0",
-    "autoprefixer": "^10.4.20",
-    "concurrently": "^8.2.2",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "typescript": "^5.0.2",
-    "vite": "^4.3.9"
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "5.0.5"
   }
 }

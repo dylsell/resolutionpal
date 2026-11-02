@@ -1,114 +1,53 @@
-# ResolutionPal 🎯
+# Resolution Pal
 
-An AI-powered web application that helps users create meaningful and achievable New Year's resolutions. Using OpenAI's GPT-4, the app guides users through personalized questions to generate detailed, actionable resolution plans.
+Turn one meaningful resolution into a realistic first week and a 90-day path. A short guided reflection leads to two personalized follow-up questions and an actionable plan. No account is required.
 
-## ✨ Features
+The 2026 rebuild is live at [resolutionpal.com](https://resolutionpal.com). It uses Next.js, TypeScript, React, Tailwind, and the OpenAI Responses API. Production deploys from `rebuild-2026` to a dedicated Render Node service. The original Flask implementation remains in Git history, and its replaced service is suspended.
 
-- **Smart Question Flow**: Dynamic, personalized questions that adapt based on user responses
-- **AI-Powered Insights**: Leverages OpenAI's GPT-4 for intelligent resolution planning
-- **Personalized Action Plans**: Detailed roadmaps with milestones and resources
-- **Location-Aware**: Suggests local resources and activities based on user location
-- **Interactive UI**: Modern, responsive design with smooth animations
-- **Resource Links**: Direct links to tools, communities, and resources
+## Run locally
 
-## 🛠 Tech Stack
+Use Node.js 24 LTS and npm.
 
-### Backend
-- Python Flask
-- OpenAI API (GPT-4)
-- Flask-CORS
-- Python-dotenv
-
-### Frontend
-- HTML5
-- Tailwind CSS
-- JavaScript
-- Font Awesome
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.8+
-- Node.js and npm
-- OpenAI API key
-
-### Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/resolutionpal.git
-   cd resolutionpal
-   ```
-
-2. **Set Up Environment Variables**
-   ```bash
-   # Create .env file
-   cp .env.example .env
-   # Add your OpenAI API key to .env
-   OPENAI_API_KEY=your_api_key_here
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   # Install Python dependencies
-   pip install -r requirements.txt
-
-   # Install Node dependencies
-   npm install
-   ```
-
-4. **Build CSS**
-   ```bash
-   npm run build:css
-   ```
-
-5. **Run the Application**
-   ```bash
-   # Development mode with CSS watching
-   npm run dev
-
-   # Or run Flask only
-   flask run
-   ```
-
-## 💻 Development
-
-### Running in Development Mode
-```bash
+```sh
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
-This will start both the Flask server and Tailwind CSS watcher.
 
-### Building for Production
-```bash
+Fill in a funded `OPENAI_API_KEY` and a random `RATE_LIMIT_SECRET` in `.env.local`. Open http://localhost:3007. The interface and example plan can be explored without a key; personalized generation requires one.
+
+```sh
+npm run typecheck
+npm test
 npm run build
+npm run start -- --port 3007
 ```
 
-## 🌐 API Endpoints
+## Data and operating limits
 
-- `GET /`: Landing page
-- `GET /start`: Start resolution creation
-- `POST /start_session`: Initialize AI session
-- `POST /get_next_question`: Get next question
-- `POST /generate_resolution`: Generate final resolution
+- Drafts and finished plans stay in the visitor's browser. Clear them with **Clear my plan**. Browser storage is not encrypted and does not synchronize across devices.
+- Answers are sent through the server to OpenAI to generate questions and plans. The server does not save those answers or plans; Responses requests use `store: false`. Provider processing policies still apply.
+- SQLite stores aggregate events, cost reservations, and rate-limit counters. Keep it on a persistent disk in production. Its unavailability stops generation rather than silently resetting the allowance.
+- The default AI allowance is $5 per UTC day and $15 per UTC month. Reservations include bounded retries and remain charged if the outcome is unknown. This is application accounting, not a guaranteed provider billing ceiling.
+- Run a single service instance. This release does not support distributed counters, accounts, email reminders, or public personal-plan links.
 
-## 🔒 Environment Variables
+## Server routes
 
-Required environment variables:
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `FLASK_ENV`: Development/Production
-- `FLASK_RUN_PORT`: Default 5001
+| Route | Purpose |
+| --- | --- |
+| `POST /api/followups` | Validate reflection answers and produce two follow-up questions, with a prepared fallback when generation fails. |
+| `POST /api/plan` | Validate completed answers and return a structured plan. |
+| `POST /api/events` | Record an allowlisted aggregate event without goal text. |
+| `GET /api/health` | Check readiness without an AI request. |
 
-## 📝 License
+POST routes enforce same-origin access and bounded inputs. Request and result types are defined in `lib/types.ts`; clients should use those types instead of constructing a second schema.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Deploy
 
-## 🙏 Acknowledgments
+Use the [release runbook](docs/release-runbook.md) for the existing production service, deployment checks, and rollback. Do not deploy this branch to the legacy Python service. The Blueprint intentionally omits custom domains so that a recreated service must pass preview validation before moving production routing. See the [verification record](docs/verification.md) for the shipped release and completed checks.
 
-- OpenAI for GPT-4 API
-- Flask team for the awesome framework
-- Tailwind CSS for the styling utilities
+The deployed baseline is $7/month compute and $0.25/month for a 1 GB disk, with a $15 application AI allowance. Extra build spending is limited to $0. Bandwidth overages, taxes, and domain renewal are separate. See [Render pricing](https://render.com/pricing).
 
-## 🤝 Contributing
+Run `npm run metrics` in the service's shell to inspect the current UTC day/month's reserved and settled AI allowance and the last seven days of aggregate events. The script opens `DATA_DIR/resolutionpal.sqlite3` read-only and does not display visitor identifiers. Locally it defaults to `./data`; pass `DATA_DIR` explicitly if your local override differs.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Background: [product and promotion history](docs/research.md). Launch material: [LinkedIn draft and demo storyboard](docs/launch.md).
