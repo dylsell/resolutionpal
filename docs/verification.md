@@ -1,5 +1,13 @@
 # Rebuild verification
 
+## November 2 visual refinement
+
+- Restored the original top-hat Pal as a prominent hero character and a companion in the header, reflection, waiting states, and finished plan. Added a top-hat favicon and a matching social preview.
+- Added stronger coral, lilac, yellow, and mint surfaces while preserving the working flow. Shared visual styles are screen-only; existing result pagination and print rules remain intact.
+- Inspected the homepage at 1280, 768, 390, and 360 pixels wide. No horizontal overflow was observed. Added space below the desktop example card and removed the decorative badge at tablet sizes to keep minute values visible.
+- Completed a real local reading journey: personalized follow-ups returned successfully, and the 30-minute plan used 30 minutes in its first week and 19 minutes in its recurring routine. Inspected the mobile result, action cards, smaller-version panel, milestones, and closing encouragement.
+- Verified the generated 1200×630 social preview visually. The existing 43 tests and production build passed. Independent review identified and resolved small-label contrast on colored result panels.
+
 Recorded November 1, 2026. Resolution Pal is live at https://resolutionpal.com. Domain cutover began at 18:47 UTC; HTTPS and redirects were verified around 18:50 UTC, followed by a complete production journey and aggregate-usage check.
 
 ## Passed locally

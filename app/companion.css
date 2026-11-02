@@ -1,0 +1,129 @@
+/* Pal's colorful world, shared by the welcome, reflection, and result.
+   Screen-only styling keeps the verified print layout and paper palette intact. */
+@media screen {
+  :root {
+    --cream: #fff9ee;
+    --paper: #fffefa;
+    --ink: #29263f;
+    --muted: #656171;
+    --line: #ded6cc;
+    --lilac: #d6c2ff;
+    --lilac-dark: #6443a0;
+    --amber: #ffd05a;
+    --green: #cdebdc;
+    --coral: #ff826f;
+    --accent: #b93648;
+  }
+  .button { border-radius: 14px; }
+  .button-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: #a32c3e;
+    box-shadow: 0 4px 0 #8b2637;
+  }
+  .button-primary:hover { background: #a52b3e; box-shadow: 0 6px 0 #8b2637; }
+  .button-primary:active { box-shadow: 0 1px 0 #8b2637; }
+  .button-outline { background: var(--paper); border-color: #a79bac; }
+  .button-outline:hover { background: #eee3ff; }
+  :focus-visible { outline-color: var(--lilac-dark); }
+  .status-dot { background: #56816a; }
+  .site-header { background: var(--paper); border-bottom: 1px solid #e4dccc; }
+  .brand-mascot {
+    width: 54px; height: 60px; margin-right: 8px; position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .brand-mascot::before {
+    content: ''; position: absolute; width: 44px; height: 44px;
+    background: var(--amber); border-radius: 50%; bottom: 2px;
+  }
+  .brand-mascot img { width: 60px; height: 60px; max-width: none; position: relative; object-fit: contain; }
+  .brand-pal, .brand-dot { color: var(--accent); }
+  .header-note { color: var(--lilac-dark); }
+  .site-header .button-outline { background: #ffe4a0; border-color: #d1a755; }
+  .site-header .button-outline:hover { background: var(--amber); }
+  .site-footer { border-top: 2px solid #dbc8ee; }
+  .footer-brand { color: var(--accent); }
+
+  .journey-layout { gap: 60px; }
+  .journey-side-content { padding-top: 30px; }
+  .journey-side-content h2 { margin-top: 12px; }
+  .journey-pal { position: relative; width: 150px; margin: 0 auto 20px; }
+  .journey-pal::before {
+    content: ''; position: absolute; inset: 24px 0 0; background: var(--amber);
+    border-radius: 48% 52% 42% 58% / 60% 40% 60% 40%; transform: rotate(-8deg);
+  }
+  .journey-pal img { position: relative; width: 150px; height: 150px; object-fit: contain; }
+  .phase-list { margin: 28px 0; gap: 19px; }
+  .phase-list li { color: #79727e; }
+  .phase-current>span { background: var(--lilac); }
+  .aside-note { background: #efe3ff; border: 0; border-radius: 18px; margin-top: 30px; padding: 18px; color: #5d427e; }
+  .save-note { padding-top: 30px; font-size: 11px; }
+  .save-note small { font-size: 11px; }
+  .progress-dots span { height: 5px; }
+  .progress-dots .progress-filled { background: var(--accent); }
+  .form-eyebrow { color: var(--lilac-dark); }
+  .field-group textarea, .manual-copy textarea { border-radius: 14px; border-color: #cfc2ce; }
+  .field-group textarea:focus { border-color: var(--lilac-dark); box-shadow: 0 0 0 3px #d6c2ff66; }
+  .example-chips button { border-radius: 18px; background: #eee2ff; border-color: #d7c5ef; }
+  .example-chips button:nth-child(2) { background: #ffecb0; border-color: #ead18a; }
+  .example-chips button:nth-child(3) { background: #d9efe2; border-color: #b8dcc6; }
+  .example-chips button:nth-child(4) { background: #ffe2d9; border-color: #ebc4b8; }
+  .example-chips button:hover { background: #e3cffb; border-color: #9c7dba; }
+  .example-chips button>span { color: var(--ink); }
+  .time-options>button, .date-options>button, .answer-options>button { border-radius: 13px; }
+  .time-options>button.selected, .date-options>button.selected, .answer-options>button.selected {
+    background: #e7d8ff; border-color: #7a579d; box-shadow: 0 0 0 1px #7a579d;
+  }
+  .review-list { border-radius: 18px; border-top: 5px solid var(--lilac); }
+  .thinking-pal { background: var(--amber); width: 148px; height: 148px; margin: 0 auto 28px; border-radius: 46% 54% 52% 48%; }
+  .thinking-pal img { width: 168px; height: 168px; max-width: none; transform: translate(-10px, -20px); object-fit: contain; }
+  .loading-shell>img { object-fit: contain; }
+  .mobile-pal-greeting { display: none; }
+
+  .result-pal { display: block; width: 110px; height: 110px; margin: 0 auto 18px; object-fit: contain; }
+  .result-heading { padding-top: 30px; }
+  .result-heading .eyebrow { color: var(--lilac-dark); }
+  .meaning-card { border-radius: 20px; background: #eee2ff; border-color: #d7c1f5; }
+  .meaning-success { background: #e0f1e5; border-color: #bfdcc9; }
+  .action-card { border-radius: 18px; border-top: 5px solid var(--amber); }
+  .action-card:nth-child(3n + 2) { border-top-color: var(--coral); }
+  .action-card:nth-child(3n + 3) { border-top-color: #b394ed; }
+  .action-number { background: #ffebb0; color: var(--ink); }
+  .action-card:nth-child(3n + 2) .action-number { background: #ffe1d8; }
+  .action-card:nth-child(3n + 3) .action-number { background: #e7d8ff; }
+  .kindness-card { background: #ffe5b0; border-color: #e4bf77; border-radius: 23px 23px 23px 4px; }
+  .kindness-card, .kindness-card h3, .kindness-card p, .kindness-card strong { color: var(--ink); }
+  .kindness-card .eyebrow, .handwritten { color: #755725; }
+  .milestone-marker>span { background: #e7d8ff; border-color: #bba0df; }
+  .reflection-section { background: #efe3ff; border-radius: 24px; border: 0; padding-left: 24px; padding-right: 24px; }
+  .encouragement { background: #ffebc4; padding: 24px 30px; border-radius: 25px; max-width: 800px; }
+  .encouragement img { width: 110px; height: 110px; object-fit: contain; }
+  .reflection-section .eyebrow, .encouragement .eyebrow { color: var(--lilac-dark); }
+  .result-footer-actions { background: #e6daf9; border-radius: 22px; }
+  .empty-icon { width: 140px; height: 140px; background: #ffe5a0; }
+  .empty-icon img { width: 160px; height: 160px; max-width: none; object-fit: contain; }
+}
+
+@media screen and (max-width: 1050px) {
+  .journey-layout { gap: 38px; }
+}
+@media screen and (max-width: 760px) {
+  .brand-mascot { width: 37px; height: 48px; margin-right: 6px; }
+  .brand-mascot::before { width: 34px; height: 34px; bottom: 3px; }
+  .brand-mascot img { width: 48px; height: 48px; }
+  .wordmark { font-size: 21px; letter-spacing: -1.2px; }
+  .header-inner { gap: 10px; }
+  .header-note { font-size: 11px; max-width: 105px; }
+  .journey-layout { gap: 0; }
+  .mobile-pal-greeting { display: flex; align-items: center; gap: 14px; padding: 12px 18px 12px 8px; margin-bottom: 25px; background: #ffebba; border-radius: 18px; }
+  .mobile-pal-greeting img { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; }
+  .mobile-pal-greeting p { font-family: var(--display); font-size: 16px; line-height: 1.5; }
+  .mobile-pal-greeting strong { font-weight: 600; }
+  .result-pal { width: 94px; height: 94px; margin-bottom: 14px; }
+  .encouragement { padding: 20px 17px; }
+  .encouragement img { width: 76px; height: 76px; }
+}
+@media screen and (max-width: 380px) {
+  .wordmark { font-size: 19px; }
+  .header-note { max-width: 96px; font-size: 10px; }
+}

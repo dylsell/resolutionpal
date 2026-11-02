@@ -13,7 +13,7 @@ Target: a complete usable journey on https://resolutionpal.com, within the agree
 
 ## 2. Deploy and verify the new preview
 
-The new service is deployed at https://resolutionpal-2026.onrender.com ([Render service](https://dashboard.render.com/web/srv-dbjnjs67bikc7381c7rg)). The verified final application commit is `bf78dfcb324934e43f052d5c8a541234a5844cc8`, deployment `dep-dbjofndg1s2s73875ep0`. Render has automatically deployed commits `289f24f` and `bf78dfc`; its deployment UI explicitly showed `Trigger: Auto-Deploy`. The earlier manual-only assumption based on the service's creation flow was incorrect.
+The new service is deployed at https://resolutionpal-2026.onrender.com ([Render service](https://dashboard.render.com/web/srv-dbjnjs67bikc7381c7rg)). The verified launch-day application commit was `bf78dfcb324934e43f052d5c8a541234a5844cc8`, deployment `dep-dbjofndg1s2s73875ep0`. Render has automatically deployed commits `289f24f` and `bf78dfc`; its deployment UI explicitly showed `Trigger: Auto-Deploy`. The earlier manual-only assumption based on the service's creation flow was incorrect.
 
 Treat every push to `rebuild-2026`, including documentation-only changes, as a possible live deployment. Confirm CI results and the deployed commit in Render. Check the live service's auto-deploy setting when changing release controls; observed automatic deployment alone does not establish that CI gating is enabled. Use manual deployment of a checked commit when necessary. See [verification evidence](verification.md) for real hosted journeys, exports, and the persistent-counter restart check.
 

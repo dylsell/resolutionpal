@@ -6,6 +6,8 @@ import '@fontsource/dm-sans/700.css';
 import '@fontsource/fraunces/500.css';
 import '@fontsource/fraunces/600.css';
 import './globals.css';
+import './companion.css';
+import './landing-personality.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://resolutionpal.com'),
@@ -23,5 +25,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#fbf7ef' };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body style={{ '--font-sans': '"DM Sans", sans-serif', '--font-display': '"Fraunces", Georgia, serif' } as React.CSSProperties}><a href="#main-content" className="skip-link">Skip to content</a>{children}</body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body style={{ '--font-sans': '"DM Sans", sans-serif', '--font-display': '"Fraunces", Georgia, serif' } as React.CSSProperties}><a href="#main-content" className="skip-link">Skip to content</a>{children}</body></html>;
 }
