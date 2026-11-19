@@ -22,7 +22,7 @@ vi.mock('openai', () => {
 });
 
 import OpenAI from 'openai';
-import { makeFollowups, makePlan, usageCostMicros } from '../lib/server/ai';
+import { makeFollowups, makeNextQuestion, makePlan, usageCostMicros } from '../lib/server/ai';
 import { QuotaStore } from '../lib/server/store';
 
 const intake = { goal: 'PRIVATE_GOAL', motivation: 'PRIVATE_MOTIVATION', success: 'Finish three books', baseline: 'Rarely read', obstacle: 'Phone distraction', minutesPerWeek: 30, startDate: '2026-11-01' };
@@ -34,6 +34,53 @@ function store(dailyMicros = 5_000_000) { const result = new QuotaStore(':memory
 
 beforeEach(() => { vi.stubEnv('OPENAI_API_KEY', 'test-only-not-a-real-key'); mock.create.mockReset(); mock.configurations.length = 0; });
 afterEach(() => { stores.splice(0).forEach((db) => db.close()); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+
+describe('adaptive interview', () => {
+  const opening = { question: 'What would you like to make room for?', answer: 'Learning something' };
+  const focus = { question: 'What would you like to learn?', answer: 'A new language' };
+  const next = { question: 'Where are you starting with a new language?', options: ['Brand new', 'I know a few phrases', 'I want to pick it back up'] };
+
+  it('sends the ordered transcript and the latest choice for one new question', async () => {
+    mock.create.mockResolvedValueOnce(success(next));
+    const answers = [opening, focus];
+    await expect(makeNextQuestion(answers, store())).resolves.toEqual(next);
+    expect(mock.create).toHaveBeenCalledTimes(1);
+    const request = mock.create.mock.calls[0][0];
+    expect(JSON.parse(request.input)).toEqual({ answers, latestChoice: focus.answer });
+    expect(request.text.format.name).toBe('next_question');
+    expect(request.store).toBe(false);
+  });
+
+  it.each([
+    { ...next, question: 'WHAT WOULD YOU LIKE TO LEARN!' },
+    { ...next, options: ['Brand new', 'BRAND NEW!', 'Picking it back up'] },
+  ])('rejects unusable questions or duplicate choices', async (invalid) => {
+    mock.create.mockResolvedValueOnce(success(invalid));
+    await expect(makeNextQuestion([opening, focus], store())).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
+    expect(mock.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('plans from the complete quiz transcript and validates its chosen time budget', async () => {
+    const answers = [
+      opening,
+      focus,
+      { question: next.question, answer: next.options[0] },
+      { question: 'What would you like to be able to do?', answer: 'Have a short conversation' },
+      { question: 'What makes regular practice difficult?', answer: 'Unpredictable evenings' },
+      { question: 'What would fit a changing schedule?', answer: 'Short practice whenever I have a gap' },
+    ];
+    const quiz = { answers, minutesPerWeek: 20, startDate: '2026-11-19' };
+    const valid = {
+      ...plan,
+      firstWeek: plan.firstWeek.map(action => ({ ...action, minutes: 5 })),
+      weeklyRoutine: plan.weeklyRoutine.map(action => ({ ...action, minutesPerWeek: 20 })),
+    };
+    mock.create.mockResolvedValueOnce(success(plan)).mockResolvedValueOnce(success(valid));
+    await expect(makePlan(quiz, store())).resolves.toEqual(valid);
+    expect(JSON.parse(mock.create.mock.calls[0][0].input)).toEqual(quiz);
+    expect(mock.create.mock.calls[1][0].instructions).toContain('firstWeek exceeded 20 minutes');
+  });
+});
 
 describe('bounded model generation', () => {
   it('disables provider storage and SDK retries, validates output, and records actual known usage', async () => {

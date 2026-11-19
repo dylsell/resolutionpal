@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { localDate } from './dates';
-import type { SavedJourney } from './types';
+import type { AdaptiveJourney, SavedJourney } from './types';
 
 const STORAGE_KEY = 'resolutionpal.journey.v1';
 let memoryJourney: SavedJourney | null = null;
@@ -14,15 +14,41 @@ export function newJourney(): SavedJourney {
     questions: [], answers: {}, plan: null,
   };
 }
+export function hasQuizDraft(journey: SavedJourney | null) {
+  return Boolean(journey?.adaptive?.turns[0]?.answer);
+}
+
+function isDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T12:00:00Z`);
+  return Number.isFinite(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function validAdaptive(value: unknown): value is AdaptiveJourney {
+  if (!value || typeof value !== 'object') return false;
+  const { step, turns, minutesPerWeek, startDate } = value as AdaptiveJourney;
+  if (!Number.isInteger(step) || step < 0 || step > 8 || !Array.isArray(turns) || turns.length > 6) return false;
+  if (minutesPerWeek !== null && (!Number.isInteger(minutesPerWeek) || minutesPerWeek < 5 || minutesPerWeek > 1200)) return false;
+  if (startDate !== null && !isDate(startDate)) return false;
+  if (step > 0 && turns.length < Math.min(step + 1, 6)) return false;
+  if (step >= 7 && minutesPerWeek === null) return false;
+  if (step === 8 && startDate === null) return false;
+  return turns.every((turn, index) => {
+    if (!turn || typeof turn.question !== 'string' || !turn.question.trim()) return false;
+    if (!Array.isArray(turn.options) || turn.options.length < 2 || turn.options.length > 12) return false;
+    if (!turn.options.every(option => typeof option === 'string' && option.trim())) return false;
+    if (turn.answer === undefined) return index >= step && index === turns.length - 1;
+    return turn.options.includes(turn.answer);
+  });
+}
+
 function validSaved(value: unknown): value is SavedJourney {
   if (!value || typeof value !== 'object') return false;
   const j = value as SavedJourney;
   if (typeof j.updatedAt !== 'string' || !Number.isFinite(Date.parse(j.updatedAt))) return false;
   if (j.version !== 1 || !j.intake || !Number.isInteger(j.step) || j.step < 0 || j.step > 6 || !Array.isArray(j.questions) || !j.answers || typeof j.answers !== 'object') return false;
   if (!['goal', 'motivation', 'success', 'baseline', 'obstacle', 'startDate'].every(k => typeof j.intake[k as keyof typeof j.intake] === 'string')) return false;
-  if (!Number.isFinite(j.intake.minutesPerWeek) || !/^\d{4}-\d{2}-\d{2}$/.test(j.intake.startDate)) return false;
-  const parsedDate = new Date(`${j.intake.startDate}T12:00:00Z`);
-  if (!Number.isFinite(parsedDate.valueOf()) || parsedDate.toISOString().slice(0, 10) !== j.intake.startDate) return false;
+  if (!Number.isFinite(j.intake.minutesPerWeek) || !isDate(j.intake.startDate)) return false;
   if (!j.questions.every(q => q && typeof q.id === 'string' && typeof q.question === 'string' && Array.isArray(q.options) && q.options.every(o => typeof o === 'string'))) return false;
   if (!Object.values(j.answers).every(a => typeof a === 'string')) return false;
   if (j.plan) {
@@ -43,6 +69,7 @@ export function readJourney(): SavedJourney | null {
   const parsed: unknown = JSON.parse(saved);
   if (!validSaved(parsed)) return memoryJourney;
   if (memoryJourney && Date.parse(memoryJourney.updatedAt) >= Date.parse(parsed.updatedAt)) return memoryJourney;
+  if (!validAdaptive(parsed.adaptive)) delete parsed.adaptive;
   return parsed;
 }
 export function persistJourney(journey: SavedJourney): boolean {

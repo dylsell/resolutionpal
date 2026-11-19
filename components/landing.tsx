@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { readJourney } from '@/lib/journey';
+import { hasQuizDraft, readJourney } from '@/lib/journey';
 import { track } from '@/lib/client';
 import { Arrow, Check, Clock, Heart, Leaf, Spark } from './icons';
 import { Header, Footer } from './header';
@@ -15,7 +15,7 @@ export default function Landing() {
     try {
       const saved = readJourney();
       if (saved?.plan) setResume('plan');
-      else if (saved?.intake.goal) setResume('draft');
+      else if (hasQuizDraft(saved)) setResume('draft');
     } catch { /* A fresh start remains available. */ }
     try {
       if (!sessionStorage.getItem('resolutionpal.visited')) {
@@ -38,7 +38,7 @@ export default function Landing() {
           <p className="hero-description">You don’t need to become a whole new person.<br className="desktop-break" /> Just take the next step toward something that matters.</p>
           <div className="hero-action">
             <Link className="button button-primary" href={destination}>{buttonLabel} <Arrow /></Link>
-            <p><Clock size={15} /> A few thoughtful minutes. Free. No signup.</p>
+            <p><Clock size={15} /> Free. No signup. No typing.</p>
           </div>
           <div className="hero-small-note"><Spark className="tiny-star" size={17} /> A fresh start doesn’t need a new year.</div>
         </div>
@@ -79,8 +79,8 @@ export default function Landing() {
           <p>Bring a big dream, a quiet hope, or that thing<br className="desktop-break" /> you keep meaning to start. We’ll take it from there.</p>
         </div>
         <div className="how-grid">
-          <article className="how-card how-card-lilac"><div className="step-number"><span>01</span><Heart size={28} /></div><h3>Find your thing.</h3><p>Tell us what you want to change and why it matters to you. There’s no right size for a resolution.</p><span className="how-card-note">Start with what matters.</span></article>
-          <article className="how-card how-card-yellow"><div className="step-number"><span>02</span><Clock size={28} /></div><h3>Make it fit.</h3><p>A few thoughtful questions about your time, your starting point, and what tends to get in the way.</p><span className="how-card-note">Your actual, everyday life.</span></article>
+          <article className="how-card how-card-lilac"><div className="step-number"><span>01</span><Heart size={28} /></div><h3>Find your thing.</h3><p>Pick what you’d like to make more room for. If you’re unsure, Pal can help you find a direction.</p><span className="how-card-note">Start with what matters.</span></article>
+          <article className="how-card how-card-yellow"><div className="step-number"><span>02</span><Clock size={28} /></div><h3>Make it fit.</h3><p>Tap the answer that feels closest. Pal uses each choice to decide what to ask next.</p><span className="how-card-note">Your actual, everyday life.</span></article>
           <article className="how-card how-card-mint"><div className="step-number"><span>03</span><Leaf size={28} /></div><h3>Start small. Keep going.</h3><p>Get your first-week actions, a 90-day path, and a smaller version for the weeks life happens.</p><span className="how-card-note">A plan with room to be human.</span></article>
         </div>
       </section>

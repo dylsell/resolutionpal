@@ -17,12 +17,32 @@ export const followupQuestionSchema = z.object({
 }).strict();
 export const followupOutputSchema = z.object({ questions: z.array(followupQuestionSchema).length(2) }).strict();
 export const followupRequestSchema = z.object({ intake: intakeSchema, requestId: z.uuid() }).strict();
-export const planRequestSchema = z.object({
+
+const quizAnswerSchema = z.object({ question: text(180), answer: text(100) }).strict();
+export const nextQuestionRequestSchema = z.object({
+  answers: z.array(quizAnswerSchema).min(1).max(5),
+  requestId: z.uuid(),
+}).strict();
+export const nextQuestionOutputSchema = z.object({
+  question: text(150),
+  options: z.array(text(72)).min(3).max(4),
+}).strict();
+
+const legacyPlanRequestSchema = z.object({
   intake: intakeSchema,
   followups: z.array(z.object({ id: z.enum(['q1', 'q2']), question: text(350), answer: text(1000) }).strict()).length(2)
     .refine((answers) => new Set(answers.map((answer) => answer.id)).size === 2, 'Answer both questions.'),
   requestId: z.uuid(),
 }).strict();
+const quizPlanRequestSchema = z.object({
+  answers: z.array(quizAnswerSchema).length(6),
+  minutesPerWeek: intakeSchema.shape.minutesPerWeek,
+  startDate: date,
+  requestId: z.uuid(),
+}).strict();
+export const planRequestSchema = z.union([quizPlanRequestSchema, legacyPlanRequestSchema]);
+export type QuizAnswer = z.infer<typeof quizAnswerSchema>;
+export type QuizPlanInput = Omit<z.infer<typeof quizPlanRequestSchema>, 'requestId'>;
 
 export const planSchema = z.object({
   title: text(90), resolution: text(450), why: text(400), successMeasure: text(400),

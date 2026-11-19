@@ -16,7 +16,10 @@ export async function POST(request: Request) {
     const key = context.hash(`request:${body.requestId}`);
     context.store.beginRequest(key, 'plan', context);
     requestKey = key;
-    const plan = await makePlan({ intake: body.intake, followups: body.followups }, context.store);
+    const input = 'intake' in body
+      ? { intake: body.intake, followups: body.followups }
+      : { answers: body.answers, minutesPerWeek: body.minutesPerWeek, startDate: body.startDate };
+    const plan = await makePlan(input, context.store);
     context.store.finishRequest(requestKey, 'completed');
     return json({ plan }, 200, context);
   } catch (error) {

@@ -1,6 +1,6 @@
 # Resolution Pal
 
-Turn one meaningful resolution into a realistic first week and a 90-day path. A short guided reflection leads to two personalized follow-up questions and an actionable plan. No account is required.
+Turn one meaningful resolution into a realistic first week and a 90-day path. A short multiple-choice quiz adapts to each answer and turns your choices into an actionable plan. No typing or account is required.
 
 The 2026 rebuild is live at [resolutionpal.com](https://resolutionpal.com). It uses Next.js, TypeScript, React, Tailwind, and the OpenAI Responses API. Production deploys from `rebuild-2026` to a dedicated Render Node service. The original Flask implementation remains in Git history, and its replaced service is suspended.
 
@@ -35,7 +35,8 @@ npm run start -- --port 3007
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/followups` | Validate reflection answers and produce two follow-up questions, with a prepared fallback when generation fails. |
+| `POST /api/question` | Use the quiz choices so far to generate the next multiple-choice question. |
+| `POST /api/followups` | Support the previous interview for clients still open during deployment. |
 | `POST /api/plan` | Validate completed answers and return a structured plan. |
 | `POST /api/events` | Record an allowlisted aggregate event without goal text. |
 | `GET /api/health` | Check readiness without an AI request. |

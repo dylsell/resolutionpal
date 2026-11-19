@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useJourney } from '@/lib/journey';
+import { hasQuizDraft, useJourney } from '@/lib/journey';
 import { addDays, formatDate } from '@/lib/dates';
 import { planAsText } from '@/lib/export';
 import { track } from '@/lib/client';
@@ -16,7 +16,7 @@ export default function PlanResult() {
   const [status, setStatus] = useState('');
   const [manualCopy, setManualCopy] = useState('');
   if (!journey) return <><Header minimal /><main id="main-content" className="loading-shell"><Image loading="eager" src="/pal.png" alt="" width={100} height={100} /><p>Opening your next chapter…</p></main></>;
-  if (!journey.plan) return <><Header minimal /><main id="main-content" className="empty-state section-container"><div className="empty-icon"><Image loading="eager" src="/pal.png" alt="Pal, ready to help you make a plan" width={160} height={160} /></div><span className="eyebrow">THERE’S ROOM FOR A FRESH START</span><h1>Your plan starts<br />with your something.</h1><p>{journey.intake.goal ? 'Your draft is right where you left it. A few more thoughtful minutes, and you’ll have a way forward.' : 'A few questions about what matters, and a little room for what comes next.'}</p><Link href="/start" className="button button-primary">{journey.intake.goal ? 'Continue my plan' : 'Make my plan'} <Arrow /></Link></main><Footer /></>;
+  if (!journey.plan) return <><Header minimal /><main id="main-content" className="empty-state section-container"><div className="empty-icon"><Image loading="eager" src="/pal.png" alt="Pal, ready to help you make a plan" width={160} height={160} /></div><span className="eyebrow">THERE’S ROOM FOR A FRESH START</span><h1>Your plan starts<br />with your something.</h1><p>{hasQuizDraft(journey) ? 'Your draft is right where you left it. A few more thoughtful minutes, and you’ll have a way forward.' : 'A few questions about what matters, and a little room for what comes next.'}</p><Link href="/start" className="button button-primary">{hasQuizDraft(journey) ? 'Continue my plan' : 'Make my plan'} <Arrow /></Link></main><Footer /></>;
   const { plan, intake } = journey;
   async function copyPlan() {
     const text = planAsText(plan!, intake);

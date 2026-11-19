@@ -26,6 +26,19 @@ export type ResolutionPlan = {
   encouragement: string;
 };
 
+export type AdaptiveTurn = {
+  question: string;
+  options: string[];
+  answer?: string;
+};
+
+export type AdaptiveJourney = {
+  step: number;
+  turns: AdaptiveTurn[];
+  minutesPerWeek: number | null;
+  startDate: string | null;
+};
+
 export type SavedJourney = {
   version: 1;
   updatedAt: string;
@@ -34,6 +47,7 @@ export type SavedJourney = {
   questions: FollowupQuestion[];
   answers: Record<string, string>;
   plan: ResolutionPlan | null;
+  adaptive?: AdaptiveJourney;
 };
 
 export type ApiError = { error: string; code: string; retryAfter?: number };
